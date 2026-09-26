@@ -1,4 +1,11 @@
 __pycache__/
 *.pyc
-backend/uploads/
+
+# Secrets
 backend/.env
+
+# Database
+backend/habrivo.db
+
+# Uploads
+backend/uploads/
