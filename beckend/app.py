@@ -93,8 +93,9 @@ def login():
         "success": False,
         "message": "Invalid Credentials"
     }), 401
-print("ADMIN_EMAIL =", os.getenv("ADMIN_EMAIL"))
-print("LOGIN EMAIL =", data.get("email"))
+print("=== LOGIN DEBUG ===")
+print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"))
+print("USER EMAIL:", data.get("email"))
 @app.get("/api/logout")
 def logout():
     session.clear()
