@@ -82,28 +82,23 @@ from flask import request, jsonify, session
 
 @app.post("/api/login")
 def login():
+    data = request.get_json() or {}
 
-    data = request.get_json()
+    env_email = (os.getenv("ADMIN_EMAIL") or "").strip()
+    env_password = (os.getenv("ADMIN_PASSWORD") or "").strip()
+
+    user_email = (data.get("email") or "").strip()
+    user_password = (data.get("password") or "").strip()
 
     print("=== LOGIN DEBUG ===", flush=True)
-    print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"), flush=True)
-    print("USER EMAIL:", data.get("email"), flush=True)
-    print("ENV PASSWORD:", repr(os.getenv("ADMIN_PASSWORD")), flush=True)
-    print("USER PASSWORD:", repr(data.get("password")), flush=True)
+    print("ENV EMAIL:", repr(env_email), flush=True)
+    print("USER EMAIL:", repr(user_email), flush=True)
+    print("ENV PASSWORD:", repr(env_password), flush=True)
+    print("USER PASSWORD:", repr(user_password), flush=True)
+    print("EMAIL MATCH:", user_email == env_email, flush=True)
+    print("PASSWORD MATCH:", user_password == env_password, flush=True)
 
-    print("=== LOGIN DEBUG ===")
-    print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"))
-    print("USER EMAIL:", data.get("email"))
-    print("ENV PASSWORD:", repr(os.getenv("ADMIN_PASSWORD")))
-    print("USER PASSWORD:", repr(data.get("password")))
-    print("ENV PASSWORD EXISTS:", os.getenv("ADMIN_PASSWORD") is not None)
-    
-    
-    
-    if (
-        data.get("email") == os.getenv("ADMIN_EMAIL")
-        and data.get("password") == os.getenv("ADMIN_PASSWORD")
-    ):
+    if user_email == env_email and user_password == env_password:
         session["admin"] = True
         return jsonify({"success": True})
 
@@ -111,6 +106,7 @@ def login():
         "success": False,
         "message": "Invalid Credentials"
     }), 401
+
 @app.get("/api/logout")
 def logout():
     session.clear()
