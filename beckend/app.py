@@ -3,8 +3,10 @@ from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 import sqlite3, os
 from werkzeug.utils import secure_filename
-from dotenv import load_dotenv
+
 import os
+from dotenv import load_dotenv
+
 
 load_dotenv()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -85,7 +87,10 @@ def login():
     print("=== LOGIN DEBUG ===")
     print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"))
     print("USER EMAIL:", data.get("email"))
-
+    print("ENV PASSWORD:", repr(os.getenv("ADMIN_PASSWORD")))
+    print("USER PASSWORD:", repr(data.get("password")))
+    print("ENV PASSWORD EXISTS:", os.getenv("ADMIN_PASSWORD") is not None)
+    print("ENV PASSWORD:", repr(os.getenv("ADMIN_PASSWORD")))
     if (
         data.get("email") == os.getenv("ADMIN_EMAIL")
         and data.get("password") == os.getenv("ADMIN_PASSWORD")
