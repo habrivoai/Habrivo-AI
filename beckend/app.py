@@ -90,7 +90,9 @@ def login():
     print("ENV PASSWORD:", repr(os.getenv("ADMIN_PASSWORD")))
     print("USER PASSWORD:", repr(data.get("password")))
     print("ENV PASSWORD EXISTS:", os.getenv("ADMIN_PASSWORD") is not None)
-    print("ENV PASSWORD:", repr(os.getenv("ADMIN_PASSWORD")))
+    
+    
+    
     if (
         data.get("email") == os.getenv("ADMIN_EMAIL")
         and data.get("password") == os.getenv("ADMIN_PASSWORD")
