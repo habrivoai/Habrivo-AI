@@ -82,6 +82,10 @@ from flask import request, jsonify, session
 def login():
     data = request.get_json()
 
+    print("=== LOGIN DEBUG ===")
+    print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"))
+    print("USER EMAIL:", data.get("email"))
+
     if (
         data.get("email") == os.getenv("ADMIN_EMAIL")
         and data.get("password") == os.getenv("ADMIN_PASSWORD")
@@ -93,9 +97,6 @@ def login():
         "success": False,
         "message": "Invalid Credentials"
     }), 401
-print("=== LOGIN DEBUG ===")
-print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"))
-print("USER EMAIL:", data.get("email"))
 @app.get("/api/logout")
 def logout():
     session.clear()
