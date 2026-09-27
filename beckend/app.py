@@ -82,12 +82,9 @@ from flask import request, jsonify, session
 def login():
     data = request.get_json()
 
-    email = data.get("email", "").strip()
-    password = data.get("password", "").strip()
-
     if (
-        email == os.getenv("ADMIN_EMAIL")
-        and password == os.getenv("ADMIN_PASSWORD")
+        data.get("email") == os.getenv("ADMIN_EMAIL")
+        and data.get("password") == os.getenv("ADMIN_PASSWORD")
     ):
         session["admin"] = True
         return jsonify({"success": True})
