@@ -75,20 +75,27 @@ def check_auth():
 def home():
     return send_from_directory(FRONTEND, "index.html")
 
+import os
+from flask import request, jsonify, session
+
 @app.post("/api/login")
 def login():
     data = request.get_json()
 
-    email = data.get("email", "")
-    password = data.get("password", "")
+    email = data.get("email", "").strip()
+    password = data.get("password", "").strip()
 
-    if email == "admin@habrivo.ai" and password == "Habrivo@2026":
+    if (
+        email == os.getenv("ADMIN_EMAIL")
+        and password == os.getenv("ADMIN_PASSWORD")
+    ):
         session["admin"] = True
         return jsonify({"success": True})
 
-    return jsonify({"success": False, "message": "Invalid Credentials"})
-
-
+    return jsonify({
+        "success": False,
+        "message": "Invalid Credentials"
+    }), 401
 @app.get("/api/logout")
 def logout():
     session.clear()
