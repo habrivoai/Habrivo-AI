@@ -82,7 +82,14 @@ from flask import request, jsonify, session
 
 @app.post("/api/login")
 def login():
+
     data = request.get_json()
+
+    print("=== LOGIN DEBUG ===", flush=True)
+    print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"), flush=True)
+    print("USER EMAIL:", data.get("email"), flush=True)
+    print("ENV PASSWORD:", repr(os.getenv("ADMIN_PASSWORD")), flush=True)
+    print("USER PASSWORD:", repr(data.get("password")), flush=True)
 
     print("=== LOGIN DEBUG ===")
     print("ENV EMAIL:", os.getenv("ADMIN_EMAIL"))
