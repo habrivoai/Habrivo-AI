@@ -592,33 +592,50 @@
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
-        const r = await fetch(API + "/api/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          credentials: "include",
-          body: JSON.stringify({ email, password })
-        });
-        async function logout() {
+        try {
+          const r = await fetch(API + "/api/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ email, password })
+          });
+
+          const d = await r.json();
+
+          if (d.success) {
+            document.getElementById("loginPage").style.display = "none";
+            document.getElementById("app").style.display = "block";
+
+            loadCompanies();
+          } else {
+            alert(d.message || "Login Failed");
+          }
+
+        } catch (error) {
+          console.error("Login error:", error);
+          alert("Server connection failed. Please try again.");
+        }
+      }
+
+
+      async function logout() {
+        try {
           await fetch(API + "/api/logout", {
             credentials: "include"
           });
-
-          document.getElementById("app").style.display = "none";
-          document.getElementById("loginPage").style.display = "block";
+        } catch (error) {
+          console.error("Logout error:", error);
         }
-        const d = await r.json();
 
-        if (d.success) {
-          document.getElementById("loginPage").style.display = "none";
-          document.getElementById("app").style.display = "block";
-          loadCompanies();
-        } else {
-          alert(d.message || "Login Failed");
-        }
+        document.getElementById("app").style.display = "none";
+        document.getElementById("loginPage").style.display = "block";
       }
+
+
       let chart;
+
 
       function drawChart(total) {
         const ctx = document.getElementById("chart");
