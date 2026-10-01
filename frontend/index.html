@@ -392,7 +392,9 @@
       });
 
       async function loadCompanies() {
-        const res = await fetch("/api/companies");
+        const res = await fetch(API + "/api/companies", {
+          credentials: "include"
+        });
         const companies = await res.json();
 
         const search = document.getElementById("search").value.toLowerCase();
