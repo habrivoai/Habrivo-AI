@@ -89,11 +89,7 @@ def login():
 
     user_email = (data.get("email") or "").strip()
     user_password = (data.get("password") or "").strip()
-    print("=== LOGIN DEBUG ===")
-    print("ENV EMAIL:", repr(env_email))
-    print("ENV PASSWORD:", repr(env_password))
-    print("USER EMAIL:", repr(user_email))
-    print("USER PASSWORD:", repr(user_password))
+   
 
     if user_email == env_email and user_password == env_password:
         session["admin"] = True
