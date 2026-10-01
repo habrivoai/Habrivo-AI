@@ -437,59 +437,92 @@
         });
       }
       async function editCompany(id) {
-        const res = await fetch("/api/companies");
-        const companies = await res.json();
+        try {
+          const res = await fetch(API + "/api/companies", { credentials: "include" });
+          if (!res.ok) throw new Error("Failed to load companies");
 
-        const c = companies.find(x => x.id == id);
-        if (!c) return;
+          const companies = await res.json();
+          const c = companies.find(x => String(x.id) === String(id));
 
-        editingId = id;
+          if (!c) {
+            alert("Company not found.");
+            return;
+          }
 
-        document.getElementById("name").value = c.company;
-        document.getElementById("owner").value = c.owner;
-        document.getElementById("whatsapp").value = c.whatsapp;
-        document.getElementById("category").value = c.category;
-        document.getElementById("address").value = c.address || "";
-        document.getElementById("website").value = c.website || "";
+          editingId = id;
+          document.getElementById("name").value = c.company || "";
+          document.getElementById("owner").value = c.owner || "";
+          document.getElementById("whatsapp").value = c.whatsapp || "";
+          document.getElementById("category").value = c.category || "";
+          document.getElementById("address").value = c.address || "";
+          document.getElementById("website").value = c.website || "";
 
-        if (c.logo) {
-          const preview = document.getElementById("preview");
-          preview.src = c.logo;
-          preview.style.display = "block";
+          if (c.logo) {
+            const preview = document.getElementById("preview");
+            preview.src = c.logo;
+            preview.style.display = "block";
+          }
+
+          document.getElementById("saveBtn").innerText = "Update Company";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch (error) {
+          console.error("Edit error:", error);
+          alert("Unable to load company for editing.");
         }
-
-        document.getElementById("saveBtn").innerText = "Update Company";
-
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth"
-        });
       }
-      async function viewCompany(id) {
-        const res = await fetch("/api/companies");
-        const companies = await res.json();
-        const c = companies.find(x => x.id == id);
 
-        document.getElementById("modalBody").innerHTML = `
-        ${c.logo ? `<img src="${c.logo}">` : ""}
-        <h2 style="text-align:center">${c.company}</h2>
-        <hr>
-        <p><b>Owner:</b> ${c.owner}</p>
-        <p><b>WhatsApp:</b> ${c.whatsapp}</p>
-        <p><b>Category:</b> ${c.category}</p>
-        document.getElementById("vAddress").textContent = c.address || "-";
-        document.getElementById("webBtn").onclick = () => {
-    if (c.website) window.open(c.website.startsWith("http") ? c.website : "https://" + c.website);
-};
-        <button class="msg-btn"
-            onclick="window.open('https://wa.me/91${c.whatsapp}','_blank')"
-            style="width:100%;margin-top:15px;">
-            WhatsApp
-            <button id="webBtn">Visit Website</button>
+      async function viewCompany(id) {
+        try {
+          const res = await fetch(API + "/api/companies", { credentials: "include" });
+          if (!res.ok) throw new Error("Failed to load companies");
+
+          const companies = await res.json();
+          const c = companies.find(x => String(x.id) === String(id));
+
+          if (!c) {
+            alert("Company not found.");
+            return;
+          }
+
+          const website = c.website
+            ? (c.website.startsWith("http") ? c.website : "https://" + c.website)
+            : "";
+
+          document.getElementById("modalBody").innerHTML = `
+      ${c.logo ? `<img src="${c.logo}" alt="Company Logo">` : ""}
+      <h2 style="text-align:center">${c.company || "-"}</h2>
+      <hr>
+      <p><b>Owner:</b> ${c.owner || "-"}</p>
+      <p><b>WhatsApp:</b> ${c.whatsapp || "-"}</p>
+      <p><b>Category:</b> ${c.category || "-"}</p>
+      <p><b>Address:</b> ${c.address || "-"}</p>
+      <p><b>Website:</b> ${c.website || "-"}</p>
+
+      <button class="msg-btn"
+        onclick="window.open('https://wa.me/91${c.whatsapp}','_blank')"
+        style="width:100%;margin-top:15px;">
+        WhatsApp
+      </button>
+
+      ${website ? `
+        <button id="webBtn" class="view-btn"
+          style="width:100%;margin-top:10px;">
+          Visit Website
         </button>
+      ` : ""}
     `;
 
-        document.getElementById("companyModal").style.display = "flex";
+          if (website) {
+            document.getElementById("webBtn").onclick = () => {
+              window.open(website, "_blank");
+            };
+          }
+
+          document.getElementById("companyModal").style.display = "flex";
+        } catch (error) {
+          console.error("View error:", error);
+          alert("Unable to load company details.");
+        }
       }
 
       function closeModal() {
@@ -511,8 +544,6 @@
         formData.append("category", category);
         formData.append("address", address);
         formData.append("website", website);
-        formData.append("address", document.getElementById("address").value);
-        formData.append("website", document.getElementById("website").value);
 
         if (logo) {
           formData.append("logo", logo);
@@ -534,18 +565,18 @@
           alert(editingId ? "Company Updated Successfully!" : "Company Saved Successfully!");
         } else {
           alert(result.message || "Operation Failed");
+          return;
         }
-
-        loadCompanies();
-
-
-        alert(result.message || (result.success ? "Saved Successfully" : "Operation Failed"));
 
         document.getElementById("name").value = "";
         document.getElementById("owner").value = "";
         document.getElementById("whatsapp").value = "";
         document.getElementById("category").value = "";
+        document.getElementById("address").value = "";
+        document.getElementById("website").value = "";
         document.getElementById("logo").value = "";
+        document.getElementById("preview").style.display = "none";
+        document.getElementById("preview").src = "";
 
         editingId = null;
         document.getElementById("saveBtn").innerText = "Save";
@@ -556,18 +587,24 @@
       async function deleteCompany(id) {
         if (!confirm("Are you sure you want to delete this company?")) return;
 
-        const res = await fetch(`/api/company/${id}`, {
-          method: "DELETE",
-          credentials: "include"
-        });
+        try {
+          const res = await fetch(API + "/api/company/" + id, {
+            method: "DELETE",
+            credentials: "include"
+          });
 
-        const result = await res.json();
+          const result = await res.json();
 
-        if (result.success) {
-          alert("Company deleted successfully.");
-          loadCompanies();
-        } else {
-          alert("Delete failed.");
+          if (res.ok && result.success) {
+            alert("Company deleted successfully.");
+            await loadCompanies();
+          } else {
+            alert(result.message || "Delete failed.");
+            console.error("Delete response:", result);
+          }
+        } catch (error) {
+          console.error("Delete error:", error);
+          alert("Server connection failed while deleting.");
         }
       }
 
