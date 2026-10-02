@@ -19,7 +19,11 @@ os.makedirs(UPLOAD, exist_ok=True)
 app = Flask(__name__, static_folder=FRONTEND, static_url_path="")
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["UPLOAD_FOLDER"] = UPLOAD
-
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True
+)
 CORS(app, supports_credentials=True)
 
 def conn():
