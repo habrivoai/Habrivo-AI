@@ -615,8 +615,36 @@
       }
 
       function drawChart(count) {
+        const canvas = document.getElementById("chart");
 
-        console.log("Companies:", count);
+        if (!canvas) return;
+
+        if (window.registrationChart) {
+          window.registrationChart.destroy();
+        }
+
+        window.registrationChart = new Chart(canvas, {
+          type: "bar",
+          data: {
+            labels: ["Registered Companies"],
+            datasets: [{
+              label: "Companies",
+              data: [count]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
       }
       async function checkAuth() {
         const r = await fetch(API + "/api/check-auth", {
