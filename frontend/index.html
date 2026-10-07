@@ -372,7 +372,7 @@
     <script>
       async function exportExcel() {
 
-        const res = await fetch(`${API}/api/companies`);
+        const res = await fetch(`${API}/api/companies`, { credentials: "include" });
         const companies = await res.json();
 
         const ws = XLSX.utils.json_to_sheet(companies);

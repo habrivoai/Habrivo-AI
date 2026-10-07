@@ -1,4 +1,6 @@
 
+from functools import wraps
+
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 import sqlite3, os
@@ -74,6 +76,17 @@ with conn() as db:
 
     db.commit()        
 
+def admin_required(view):
+    """Reusable decorator: allow the view only with an active admin session."""
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        if not session.get("admin"):
+            return jsonify({"success": False, "message": "Unauthorized"}), 401
+        return view(*args, **kwargs)
+
+    return wrapper
+
+
 @app.get("/api/check-auth")
 def check_auth():
     return jsonify({"loggedIn": session.get("admin", False)})
@@ -110,6 +123,7 @@ def logout():
     return jsonify({"success": True})
 
 @app.get("/api/companies")
+@admin_required
 def companies():
     with conn() as db:
         rows=[dict(r) for r in db.execute("SELECT * FROM companies ORDER BY id DESC")]
@@ -117,6 +131,7 @@ def companies():
 
 
 @app.post("/api/company")
+@admin_required
 def add_company():
     company = request.form.get("company", "")
     owner = request.form.get("owner", "")
@@ -154,6 +169,7 @@ def add_company():
     return jsonify({"success": True, "logo": logo})
 
 @app.delete("/api/company/<int:id>")
+@admin_required
 def delete_company(id):
     with conn() as db:
         db.execute("DELETE FROM companies WHERE id=?", (id,))
@@ -161,20 +177,23 @@ def delete_company(id):
 
     return jsonify({"success": True, "message": "Deleted Successfully"})
 @app.put("/api/company/<int:id>")
+@admin_required
 def update_company(id):
     with conn() as db:
-        db.execute("""
-            UPDATE companies
-           SET company=?, owner=?, whatsapp=?, category=?, address=?, website=?, logo=?
-            WHERE id=?
-        """, (
-            request.form.get("company", ""),
-            request.form.get("owner", ""),
-            request.form.get("whatsapp", ""),
-            request.form.get("category", ""),
-            id
-        ))
-        db.commit()
+       db.execute("""
+    UPDATE companies
+    SET company=?, owner=?, whatsapp=?, category=?, address=?, website=?
+    WHERE id=?
+""", (
+    request.form.get("company", ""),
+    request.form.get("owner", ""),
+    request.form.get("whatsapp", ""),
+    request.form.get("category", ""),
+    request.form.get("address", ""),
+    request.form.get("website", ""),
+    id
+))
+    db.commit()
 
     return jsonify({"success": True, "message": "Updated Successfully"})
 
