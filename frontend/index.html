@@ -410,7 +410,7 @@
           (c.category || "").toLowerCase().includes(search)
         );
 
-        drawChart(filtered.length);
+        drawChart(filtered.length, filtered);
         document.getElementById("totalCompanies").innerText = filtered.length;
         document.getElementById("totalCategories").innerText =
           new Set(filtered.map(c => c.category)).size;
@@ -614,22 +614,87 @@
         }
       }
 
-      function drawChart(count) {
-        const canvas = document.getElementById("chart");
+      function drawChart(count, companies) {
 
-        if (!canvas) return;
+        // ===== Registration Trend =====
+        const chartCanvas = document.getElementById("chart");
 
-        if (window.registrationChart) {
-          window.registrationChart.destroy();
+        if (Chart.getChart(chartCanvas)) {
+          Chart.getChart(chartCanvas).destroy();
         }
 
-        window.registrationChart = new Chart(canvas, {
+        new Chart(chartCanvas, {
           type: "bar",
           data: {
-            labels: ["Registered Companies"],
+            labels: ["Companies"],
+            datasets: [{
+              label: "Total Registered",
+              data: [count]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
+
+
+        // ===== Category-wise Analytics =====
+        const categoryCount = {};
+
+        companies.forEach(company => {
+          const category = company.category || "Other";
+
+          categoryCount[category] =
+            (categoryCount[category] || 0) + 1;
+        });
+
+        const categories = Object.keys(categoryCount);
+        const values = Object.values(categoryCount);
+
+
+        // Create category chart if it doesn't exist
+        let categoryCanvas = document.getElementById("categoryChart");
+
+        if (!categoryCanvas) {
+
+          categoryCanvas = document.createElement("canvas");
+          categoryCanvas.id = "categoryChart";
+          categoryCanvas.height = 120;
+
+          const stats = document.querySelector(".stats");
+
+          if (stats) {
+            const title = document.createElement("h3");
+            title.innerText = "Companies by Category";
+            title.style.marginTop = "25px";
+
+            stats.appendChild(title);
+            stats.appendChild(categoryCanvas);
+          }
+        }
+
+
+        if (Chart.getChart(categoryCanvas)) {
+          Chart.getChart(categoryCanvas).destroy();
+        }
+
+
+        new Chart(categoryCanvas, {
+          type: "bar",
+          data: {
+            labels: categories,
             datasets: [{
               label: "Companies",
-              data: [count]
+              data: values
             }]
           },
           options: {
