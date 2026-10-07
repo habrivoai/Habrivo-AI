@@ -293,7 +293,7 @@
 
         <button class="menu active">🏠 Dashboard</button>
         <button class="menu">🏢 Companies</button>
-        <button class="menu">📊 Analytics</button>
+        <button class="menu" onclick="showAnalytics()">📊 Analytics</button>
         <button class="menu">⚙ Settings</button>
 
         <hr>
@@ -645,6 +645,16 @@
             }
           }
         });
+      }
+      function showAnalytics() {
+        const stats = document.querySelector(".stats");
+
+        if (stats) {
+          stats.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+        }
       }
       async function checkAuth() {
         const r = await fetch(API + "/api/check-auth", {
