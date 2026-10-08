@@ -802,7 +802,12 @@
           }
         });
       }
-
+      function showDashboard() {
+        document.querySelector(".main").scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      }
     </script>
   </div>
   <div id="companyModal" class="modal">
