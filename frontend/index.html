@@ -291,10 +291,11 @@
       <aside class="sidebar">
         <h2>🚀 Habrivo</h2>
 
-        <button class="menu active" onclick="showDashboard()">🏠 Dashboard</button>
-        <button class="menu">🏢 Companies</button>
-        <button class="menu" onclick="showAnalytics()">📊 Analytics</button>
-        <button class="menu">⚙ Settings</button>
+        <button class="menu active" data-page="dashboard" onclick="showDashboard()">🏠 Dashboard</button>
+        <button class="menu" data-page="companies" onclick="showCompanies()">🏢 Companies</button>
+        <button class="menu" data-page="products" onclick="showProducts()">📦 Products</button>
+        <button class="menu" data-page="analytics" onclick="showAnalytics()">📊 Analytics</button>
+        <button class="menu" data-page="settings" onclick="showSettings()">⚙ Settings</button>
 
         <hr>
 
@@ -306,69 +307,97 @@
           🚪 Logout
         </button>
         <div class="topbar">
-          <h1>Company Dashboard</h1>
+          <h1 id="pageTitle">Company Dashboard</h1>
         </div>
+        <section id="dashboardPage" class="page-section container">
+          <h2>Overview</h2>
+          <p>Company registration summary</p>
+          <div id="dashboardSummary"></div>
+        </section>
 
-        <div class="container">
-          <!-- Tumhara existing form aur cards yahin rahenge -->
-        </div>
+        <section id="productsPage" class="page-section container" style="display:none">
+          <h2>📦 Product Management</h2>
+          <p>Manage your Habrivo AI products and inventory.</p>
 
+          <button type="button" onclick="loadProducts()">
+            🔄 Refresh Products
+          </button>
+          <h3>Add New Product</h3>
+
+          <form id="addProductForm">
+            <input id="productName" placeholder="Product Name" required>
+            <input id="productPrice" type="number" min="0" step="0.01" placeholder="Price" required>
+            <input id="productStock" type="number" min="0" step="1" placeholder="Stock" required>
+            <select id="productCurrency">
+              <option value="USD">USD</option>
+              <option value="INR">INR</option>
+            </select>
+            <button type="submit">➕ Add Product</button>
+          </form>
+          <div id="productsList">
+            Products will appear here.
+          </div>
+        </section>
+
+        <section id="companiesPage" class="page-section container" style="display:none">
+          <h2>Company Registration</h2>
+
+          <input id="name" placeholder="Company Name">
+          <input id="owner" placeholder="Owner Name">
+          <input id="whatsapp" placeholder="WhatsApp Number">
+          <input id="category" placeholder="Category">
+          <input type="text" id="address" placeholder="Address">
+          <input type="text" id="website" placeholder="Website (https://...)">
+
+          <input type="file" id="logo" accept="image/*">
+          <img id="preview" src=""
+            style="display:none;width:90px;height:90px;border-radius:50%;object-fit:cover;margin:10px 0;">
+          <button id="saveBtn" onclick="saveCompany()">Save</button>
+
+          <input id="search" placeholder="🔍 Search Company" oninput="loadCompanies()">
+
+          <hr style="margin:18px 0">
+          <button onclick="exportExcel()" style="background:green;margin:10px 0;">
+            📥 Export Excel
+          </button>
+
+          <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+          <h2>Registered Companies</h2>
+
+          <div id="companies"></div>
+
+        </section>
+        <section id="analyticsPage" class="page-section container" style="display:none">
+          <div class="stats">
+            <h3 style="margin-top:20px">Registration Trend</h3>
+
+            <canvas id="chart" height="120"></canvas>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <div class="stat-card">
+              <h2 id="totalCompanies">0</h2>
+              <p>Companies</p>
+            </div>
+
+            <div class="stat-card">
+              <h2 id="totalCategories">0</h2>
+              <p>Categories</p>
+            </div>
+
+            <div class="stat-card">
+              <h2 id="todayCount">0</h2>
+              <p>Today</p>
+            </div>
+          </div>
+
+        </section>
+        <section id="settingsPage" class="page-section container" style="display:none">
+          <h2>Settings</h2>
+          <p>Appearance</p>
+          <button style="background:#2563eb" onclick="toggleTheme()">Toggle dark mode</button>
+        </section>
       </main>
-
     </div>
-
-    <div class="container">
-
-      <h2>Company Registration</h2>
-
-      <input id="name" placeholder="Company Name">
-      <input id="owner" placeholder="Owner Name">
-      <input id="whatsapp" placeholder="WhatsApp Number">
-      <input id="category" placeholder="Category">
-      <input type="text" id="address" placeholder="Address">
-      <input type="text" id="website" placeholder="Website (https://...)">
-
-      <input type="file" id="logo" accept="image/*">
-      <img id="preview" src=""
-        style="display:none;width:90px;height:90px;border-radius:50%;object-fit:cover;margin:10px 0;">
-      <button id="saveBtn" onclick="saveCompany()">Save</button>
-
-      <div class="stats">
-        <h3 style="margin-top:20px">Registration Trend</h3>
-
-        <canvas id="chart" height="120"></canvas>
-
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <div class="stat-card">
-          <h2 id="totalCompanies">0</h2>
-          <p>Companies</p>
-        </div>
-
-        <div class="stat-card">
-          <h2 id="totalCategories">0</h2>
-          <p>Categories</p>
-        </div>
-
-        <div class="stat-card">
-          <h2 id="todayCount">0</h2>
-          <p>Today</p>
-        </div>
-      </div>
-
-      <input id="search" placeholder="🔍 Search Company" oninput="loadCompanies()">
-
-      <hr style="margin:18px 0">
-      <button onclick="exportExcel()" style="background:green;margin:10px 0;">
-        📥 Export Excel
-      </button>
-
-      <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-      <h2>Registered Companies</h2>
-
-      <div id="companies"></div>
-
-    </div>
-
     <script>
       async function exportExcel() {
 
@@ -410,11 +439,13 @@
           (c.category || "").toLowerCase().includes(search)
         );
 
-        drawChart(filtered.length, filtered);
+        window.lastCompanies = filtered;
+        if (document.getElementById("analyticsPage").style.display !== "none" && typeof Chart !== "undefined") drawChart(filtered.length, filtered);
+        document.getElementById("dashboardSummary").textContent = `${filtered.length} registered companies · ${new Set(filtered.map(c => c.category).filter(Boolean)).size} categories`;
         document.getElementById("totalCompanies").innerText = filtered.length;
         document.getElementById("totalCategories").innerText =
           new Set(filtered.map(c => c.category)).size;
-        document.getElementById("todayCount").innerText = filtered.length;
+        document.getElementById("todayCount").innerText = "—"; // Registration date field must be confirmed from backend
 
         const box = document.getElementById("companies");
         box.innerHTML = "";
@@ -470,7 +501,7 @@
           }
 
           document.getElementById("saveBtn").innerText = "Update Company";
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          showCompanies();
         } catch (error) {
           console.error("Edit error:", error);
           alert("Unable to load company for editing.");
@@ -618,6 +649,7 @@
 
         // ===== Registration Trend =====
         const chartCanvas = document.getElementById("chart");
+        if (!chartCanvas || typeof Chart === "undefined") return;
 
         if (Chart.getChart(chartCanvas)) {
           Chart.getChart(chartCanvas).destroy();
@@ -711,16 +743,6 @@
           }
         });
       }
-      function showAnalytics() {
-        const stats = document.querySelector(".stats");
-
-        if (stats) {
-          stats.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-        }
-      }
       async function checkAuth() {
         const r = await fetch(API + "/api/check-auth", {
           credentials: "include"
@@ -782,32 +804,155 @@
       }
 
 
-      let chart;
+      function showDashboard() { showPage('dashboard'); }
+      function showCompanies() { showPage('companies'); }
+      async function showProducts() {
+        showPage('products');
+        await loadProducts();
+      }
+
+      async function loadProducts() {
+        const container = document.getElementById('productsList');
+        if (!container) return;
+
+        container.textContent = 'Loading products...';
+
+        try {
+          const response = await fetch('/api/products');
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+
+          const data = await response.json();
+          if (!data.success) throw new Error('Could not load products');
+
+          container.replaceChildren();
 
 
-      function drawChart(total) {
-        const ctx = document.getElementById("chart");
+          for (const product of data.products) {
+            const item = document.createElement('div');
+            item.style.cssText = 'padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;';
 
+            const info = document.createElement('p');
+            const symbol = product.currency === 'INR' ? '₹' : '$';
+            info.textContent = `${product.name} | ${symbol}${product.price} | Stock: ${product.stock}`;
 
-        if (chart) chart.destroy();
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️ Edit Stock';
+            editBtn.type = 'button';
+            editBtn.style.marginRight = '10px';
 
-        chart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: ["Companies"],
-            datasets: [{
-              label: "Total Registered",
-              data: [total]
-            }]
+            editBtn.onclick = async () => {
+              const value = prompt('Enter new stock:', product.stock);
+              if (value === null) return;
+
+              const stock = Number(value);
+              if (!Number.isInteger(stock) || stock < 0 || value.trim() === '') {
+                alert('Enter a valid stock number');
+                return;
+              }
+
+              try {
+                const response = await fetch(`/api/products/${product.id}/stock`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ stock })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                  throw new Error(result.message || 'Update failed');
+                }
+                await loadProducts();
+              } catch (error) {
+                alert(error.message);
+              }
+            };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️ Delete';
+            deleteBtn.type = 'button';
+
+            deleteBtn.onclick = async () => {
+              if (!confirm(`Delete ${product.name}?`)) return;
+
+              try {
+                const response = await fetch(`/api/products/${product.id}`, {
+                  method: 'DELETE'
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                  throw new Error(result.message || 'Delete failed');
+                }
+                await loadProducts();
+              } catch (error) {
+                alert(error.message);
+              }
+            };
+
+            item.append(info, editBtn, deleteBtn);
+            container.appendChild(item);
+          }
+
+        } catch (error) {
+          container.textContent = 'Error loading products: ' + error.message;
+        }
+      }
+      function showAnalytics() { showPage('analytics'); }
+      function showSettings() { showPage('settings'); }
+      function showPage(page) {
+        document.querySelectorAll('.page-section').forEach(el => {
+          el.style.display = el.id === page + 'Page' ? 'block' : 'none';
+        });
+        document.querySelectorAll('.sidebar .menu[data-page]').forEach(el => {
+          el.classList.toggle('active', el.dataset.page === page);
+        });
+        const titles = {
+          dashboard: 'Company Dashboard',
+          companies: 'Companies',
+          products: 'Products',
+          analytics: 'Analytics',
+          settings: 'Settings'
+        };
+        document.getElementById('pageTitle').textContent = titles[page];
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (page === 'analytics' && window.lastCompanies && typeof Chart !== 'undefined') {
+          drawChart(window.lastCompanies.length, window.lastCompanies);
+        }
+      }
+      document.getElementById('addProductForm')
+        .addEventListener('submit', async function (event) {
+          event.preventDefault();
+
+          const product = {
+            name: document.getElementById('productName').value.trim(),
+            price: Number(document.getElementById('productPrice').value),
+            stock: Number(document.getElementById('productStock').value),
+            currency: document.getElementById('productCurrency').value
+          };
+
+          try {
+            const response = await fetch('/api/products', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              credentials: 'same-origin',
+              body: JSON.stringify(product)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+              alert(result.message || 'Failed to add product');
+              return;
+            }
+
+            alert('Product added successfully!');
+            this.reset();
+            await loadProducts();
+
+          } catch (error) {
+            alert('Error: ' + error.message);
           }
         });
-      }
-      function showDashboard() {
-        document.querySelector(".main").scrollTo({
-          top: 0,
-          behavior: "smooth"
-        });
-      }
     </script>
   </div>
   <div id="companyModal" class="modal">
@@ -816,6 +961,192 @@
       <div id="modalBody"></div>
     </div>
   </div>
+  <!-- Habrivo AI Chatbot -->
+  <style>
+    #habrivo-chat-btn {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: #2454e8;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 26px;
+      cursor: pointer;
+      z-index: 9999;
+    }
+
+    #habrivo-chat-box {
+      display: none;
+      position: fixed;
+      bottom: 95px;
+      right: 25px;
+      width: min(350px, calc(100vw - 40px));
+      height: 430px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 25px #0003;
+      z-index: 9999;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    #habrivo-chat-header {
+      background: #2454e8;
+      color: white;
+      padding: 15px;
+      font-weight: bold;
+    }
+
+    #habrivo-chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      color: #222;
+    }
+
+    #habrivo-chat-form {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+    }
+
+    #habrivo-chat-input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px;
+    }
+
+    #habrivo-chat-send {
+      background: #2454e8;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+    }
+  </style>
+
+  <button id="habrivo-chat-btn" type="button" aria-label="Open AI chat">🤖</button>
+
+  <div id="habrivo-chat-box">
+    <div id="habrivo-chat-header">🤖 Habrivo AI Assistant</div>
+    <div id="habrivo-chat-messages">Hello! How can I help you?</div>
+    <form id="habrivo-chat-form">
+      <input id="habrivo-chat-input" placeholder="Ask Habrivo AI..." required>
+      <button id="habrivo-chat-send" type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const chatBtn = document.getElementById("habrivo-chat-btn");
+    const chatBox = document.getElementById("habrivo-chat-box");
+    const chatForm = document.getElementById("habrivo-chat-form");
+    const chatInput = document.getElementById("habrivo-chat-input");
+    const chatMessages = document.getElementById("habrivo-chat-messages");
+
+    chatBtn.addEventListener("click", () => {
+      const isOpen = chatBox.style.display === "flex";
+      chatBox.style.display = isOpen ? "none" : "flex";
+      if (!isOpen) chatInput.focus();
+    });
+
+
+    function addChatMessage(sender, message) {
+      const bubble = document.createElement("div");
+      const isUser = sender === "You";
+
+      bubble.style.cssText = `
+        background: ${isUser ? "#2454e8" : "#f1f5f9"};
+        color: ${isUser ? "#ffffff" : "#1e293b"};
+        padding: 12px 15px;
+        border-radius: 14px;
+        margin: 10px 0;
+        max-width: 85%;
+        width: fit-content;
+        margin-left: ${isUser ? "auto" : "0"};
+        margin-right: ${isUser ? "0" : "auto"};
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    `;
+
+      const cleanMessage = String(message)
+        .replace(/\*\*(.*?)\*\*/g, "$1");
+
+      bubble.textContent = cleanMessage;
+
+      chatMessages.appendChild(bubble);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+
+    chatForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      addChatMessage("You", message);
+      chatInput.value = "";
+
+      const sendBtn = document.getElementById("habrivo-chat-send");
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "AI request failed");
+        }
+
+        addChatMessage("Habrivo AI", data.reply);
+      } catch (error) {
+        addChatMessage("System", error.message);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+
+  <footer style="
+    text-align: center;
+    padding: 20px 15px;
+    background: #111827;
+    color: #d1d5db;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+  ">
+    <p>© 2026 Habrivo AI. All rights reserved.</p>
+
+    <p>
+      <a href="/privacy.html" style="color: #93c5fd; margin: 0 10px;">
+        Privacy Policy
+      </a>
+
+      <a href="/terms.html" style="color: #93c5fd; margin: 0 10px;">
+        Terms of Service
+      </a>
+
+      <a href="/refund.html" style="color: #93c5fd; margin: 0 10px;">
+        Refund Policy
+      </a>
+    </p>
+
+    <p>
+      Support:
+      <a href="mailto:habrivoai@gmail.com" style="color: #93c5fd;">
+        habrivoai@gmail.com
+      </a>
+    </p>
+  </footer>
+
 </body>
 
 </html>

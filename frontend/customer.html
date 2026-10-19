@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Habrivo AI | Customer Portal</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #08152f, #1744a2);
+            color: white;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            color: #17213b;
+            padding: 32px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px #0005;
+        }
+
+        h1 {
+            color: #1754df;
+            margin-bottom: 5px;
+        }
+
+        p {
+            color: #64748b;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 13px;
+            margin: 9px 0;
+            border-radius: 9px;
+            font-size: 15px;
+        }
+
+        input {
+            border: 1px solid #cbd5e1;
+        }
+
+        button {
+            border: none;
+            background: #1754df;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: wait;
+        }
+
+        .switch {
+            color: #1754df;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        #message {
+            min-height: 20px;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* HABRIVO AI — PROFESSIONAL CUSTOMER DASHBOARD */
+
+        body:has(#welcome:not(.hidden)) {
+            background: #f1f5f9;
+            display: block;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        body:has(#welcome:not(.hidden)) main.card {
+            width: min(1200px, calc(100% - 48px));
+            max-width: none;
+            margin: 30px auto;
+            padding: 32px;
+            box-sizing: border-box;
+            border-radius: 20px;
+            box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+        }
+
+        body:has(#welcome:not(.hidden)) .dashboard-tools {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        body:has(#welcome:not(.hidden)) .dashboard-tools h3 {
+            color: #1e40af;
+        }
+
+        body:has(#welcome:not(.hidden)) #chatBox {
+            margin-top: 30px !important;
+            padding: 24px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+        }
+
+        body:has(#welcome:not(.hidden)) #chatMessages {
+            height: 420px !important;
+            overflow-y: auto;
+            padding: 20px !important;
+        }
+
+        body:has(#welcome:not(.hidden)) #chatInput {
+            margin-top: 14px;
+        }
+
+        @media (max-width: 768px) {
+            body:has(#welcome:not(.hidden)) main.card {
+                width: calc(100% - 24px);
+                margin: 12px auto;
+                padding: 20px;
+            }
+
+            body:has(#welcome:not(.hidden)) .dashboard-tools {
+                grid-template-columns: 1fr;
+            }
+
+            body:has(#welcome:not(.hidden)) #chatBox {
+                padding: 12px;
+            }
+        }
+
+        .dashboard-tools {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+
+        .tool-card {
+            background: #ffffff;
+            padding: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            transition: 0.3s;
+            min-width: 0;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .tool-icon {
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+
+        .tool-card h3 {
+            color: #0f172a;
+            font-size: 20px;
+        }
+
+        .tool-card p {
+            color: #64748b;
+            line-height: 1.6;
+            min-height: 52px;
+        }
+
+        .tool-card button {
+            background: #1954e8;
+            color: white;
+            border: none;
+            padding: 13px;
+            border-radius: 10px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        @media (max-width: 800px) {
+            .dashboard-tools {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card">
+        <h1>🚀 Habrivo AI</h1>
+        <p id="subtitle">Login to your AI workspace</p>
+
+        <form id="authForm">
+            <div id="nameField" class="hidden">
+                <input id="name" placeholder="Full Name" autocomplete="name">
+            </div>
+
+            <input id="email" type="email" placeholder="Email Address" autocomplete="email" required>
+
+            <input id="password" type="password" placeholder="Password (minimum 8 characters)"
+                autocomplete="current-password" minlength="8" required>
+
+            <button id="submitBtn" type="submit">Login</button>
+        </form>
+
+        <p id="message" role="status"></p>
+
+        <p class="switch" id="switchMode">
+            New customer? Create account
+        </p>
+
+        <section id="welcome" class="hidden">
+            <h2 id="welcomeName"></h2>
+            <p>Your customer login is working!</p>
+
+            <h3>🚀 Your AI Workspace</h3>
+            <p>Welcome to your Habrivo AI Dashboard.</p>
+
+            <div class="dashboard-tools">
+
+                <div class="tool-card">
+                    <div class="tool-icon">🤖</div>
+                    <h3>AI Assistant</h3>
+                    <p>Chat with Habrivo AI and get instant help.</p>
+                    <button type="button" id="aiChatBtn">
+                        Open AI Chat →
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon">📦</div>
+                    <h3>My Products</h3>
+                    <p>Explore products and digital services.</p>
+                    <button type="button" id="productsBtn">
+                        View Products →
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon">⚙️</div>
+                    <h3>My Account</h3>
+                    <p>Manage your personal AI workspace.</p>
+                    <button type="button" id="accountBtn">
+                        Account Settings →
+                    </button>
+                </div>
+
+            </div>
+
+            <section id="promoPricing" style="margin-top:30px;">
+                <h2>🚀 Habrivo AI Promo Studio</h2>
+                <p>AI-powered product promotions for online sellers.</p>
+
+                <label for="billingCycle">Billing period:</label>
+                <select id="billingCycle">
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="half_yearly">Half Yearly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+
+                <div id="promoPlanCards" class="dashboard-tools" style="margin-top:20px;"></div>
+
+                <p id="promoSubscriptionStatus"></p>
+            </section>
+            <section id="promoGenerator" style="margin-top:30px;">
+                <h2>🚀 AI Product Promotion Generator</h2>
+                <p>Create professional marketing content for your products.</p>
+
+                <input id="promoProductName" placeholder="Product Name"
+                    style="width:100%;padding:12px;box-sizing:border-box;margin:8px 0;">
+
+                <textarea id="promoDescription" placeholder="Product Description"
+                    style="width:100%;padding:12px;box-sizing:border-box;margin:8px 0;"></textarea>
+
+                <input id="promoAudience" placeholder="Target Audience"
+                    style="width:100%;padding:12px;box-sizing:border-box;margin:8px 0;">
+
+                <select id="promoLanguage" style="width:100%;padding:12px;margin:8px 0;">
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Bengali">Bengali</option>
+                </select>
+
+                <select id="promoTone" style="width:100%;padding:12px;margin:8px 0;">
+                    <option value="Professional">Professional</option>
+                    <option value="Friendly">Friendly</option>
+                    <option value="Luxury">Luxury</option>
+                </select>
+
+                <button type="button" id="promoGenerateBtn">
+                    ✨ Generate Promotion
+                </button>
+
+                <p id="promoMessage" role="status"></p>
+
+                <pre id="promoResult" style="white-space:pre-wrap;overflow-wrap:anywhere;"></pre>
+
+                <button type="button" id="promoCopyBtn" style="display:none;">
+                    📋 Copy Content
+                </button>
+            </section>
+
+            <div id="chatBox" style="display:none; margin-top:20px;">
+                <h3>🤖 Habrivo AI Chat</h3>
+
+                <div id="chatMessages" style="height:220px; overflow-y:auto; background:#f1f5f9;
+                            padding:12px; border-radius:10px; margin-bottom:10px;">
+                </div>
+
+                <input id="chatInput" placeholder="Ask Habrivo AI anything..."
+                    style="width:100%; padding:12px; box-sizing:border-box;">
+
+                <button type="button" id="sendChatBtn">
+                    Send Message
+                </button>
+            </div>
+
+            <button id="logoutBtn">Logout</button>
+        </section>
+    </main>
+
+    <script>
+        let signupMode = false;
+        async function restoreLogin() {
+            try {
+                const response = await fetch("/api/check-auth", {
+                    credentials: "same-origin"
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                if (data.authenticated && data.user) {
+                    document.getElementById("authForm").classList.add("hidden");
+                    document.getElementById("switchMode").classList.add("hidden");
+                    document.getElementById("welcome").classList.remove("hidden");
+
+                    document.getElementById("welcomeName").textContent =
+                        "Welcome, " + data.user.name + "!";
+                }
+            } catch (error) {
+                console.error("Session check failed:", error);
+            }
+        }
+
+        restoreLogin();
+
+        const form = document.getElementById("authForm");
+        const message = document.getElementById("message");
+        const button = document.getElementById("submitBtn");
+
+        document.getElementById("switchMode").onclick = () => {
+            signupMode = !signupMode;
+            document.getElementById("nameField")
+                .classList.toggle("hidden", !signupMode);
+            document.getElementById("name").required = signupMode;
+            document.getElementById("subtitle").textContent =
+                signupMode ? "Create your customer account" :
+                    "Login to your AI workspace";
+            button.textContent = signupMode ? "Create Account" : "Login";
+            document.getElementById("switchMode").textContent =
+                signupMode ? "Already registered? Login" :
+                    "New customer? Create account";
+            document.getElementById("password").autocomplete =
+                signupMode ? "new-password" : "current-password";
+            message.textContent = "";
+        };
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            message.textContent = "";
+            button.disabled = true;
+
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const endpoint = signupMode ?
+                "/api/register" : "/api/customer/login";
+
+            const payload = signupMode ?
+                {
+                    name: document.getElementById("name").value,
+                    email,
+                    password
+                } : { email, password };
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "same-origin",
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Request failed");
+                }
+
+                if (signupMode) {
+                    message.style.color = "green";
+                    message.textContent =
+                        "Account created! Now click Login.";
+                    document.getElementById("switchMode").click();
+                    message.textContent =
+                        "Account created successfully. Please login.";
+                } else {
+                    form.classList.add("hidden");
+                    document.getElementById("switchMode")
+                        .classList.add("hidden");
+                    document.getElementById("welcome")
+                        .classList.remove("hidden");
+                    document.getElementById("welcomeName").textContent =
+                        "Welcome, " + data.user.name + "!";
+                    message.textContent = "";
+                }
+            } catch (error) {
+                message.style.color = "crimson";
+                message.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        document.getElementById("logoutBtn").onclick = async () => {
+            // Customer logout endpoint will be added next.
+            location.reload();
+        };
+        const chatBox = document.getElementById("chatBox");
+        const chatMessages = document.getElementById("chatMessages");
+        const chatInput = document.getElementById("chatInput");
+
+        document.getElementById("aiChatBtn").onclick = () => {
+            chatBox.style.display = "block";
+        };
+
+        document.getElementById("sendChatBtn").onclick = async () => {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            const userLine = document.createElement("p");
+            userLine.style.cssText = `
+    background: #2563eb;
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    margin: 8px 0 8px auto;
+    max-width: 85%;
+    width: fit-content;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+`;
+            userLine.textContent = "You: " + message;
+            chatMessages.appendChild(userLine);
+            chatInput.value = "";
+
+            try {
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                const aiLine = document.createElement("div");
+
+                aiLine.style.cssText = `
+    background: #ffffff;
+    color: #172554;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 12px;
+    border-left: 4px solid #2563eb;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+`;
+
+                const reply = data.reply || data.error || "No response";
+
+                const aiTitle = document.createElement("strong");
+                aiTitle.textContent = "🤖 Habrivo AI";
+
+                const aiText = document.createElement("div");
+                aiText.textContent = reply.replace(/\*\*/g, "");
+
+                aiLine.appendChild(aiTitle);
+                aiLine.appendChild(aiText);
+
+                chatMessages.appendChild(aiLine);
+            } catch (error) {
+                const errorLine = document.createElement("p");
+                errorLine.textContent = "Connection error: " + error.message;
+                chatMessages.appendChild(errorLine);
+            }
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        };
+
+        async function loadPromoPlans() {
+            const container = document.getElementById("promoPlanCards");
+            const billing = document.getElementById("billingCycle");
+            const status = document.getElementById("promoSubscriptionStatus");
+
+            if (!container || !billing) return;
+
+            container.textContent = "Loading subscription plans...";
+
+            try {
+                const response = await fetch("/api/promo/plans");
+                if (!response.ok) throw new Error("Could not load plans");
+
+                const data = await response.json();
+                if (!data.success) throw new Error("API error");
+
+                function renderPlans() {
+                    container.replaceChildren();
+
+                    for (const key of ["starter", "pro", "premium"]) {
+                        const plan = data.plans[key];
+                        if (!plan) continue;
+
+                        const card = document.createElement("div");
+                        card.className = "tool-card";
+
+                        const heading = document.createElement("h3");
+                        heading.textContent = plan.name;
+
+                        const price = document.createElement("h2");
+                        price.textContent = "$" + plan.prices[billing.value] + " USD";
+
+                        const limit = document.createElement("p");
+                        limit.textContent =
+                            plan.monthly_limit + " promotions per month";
+
+                        const button = document.createElement("button");
+                        button.type = "button";
+                        button.textContent = "Choose " + plan.name;
+
+                        button.addEventListener("click", async () => {
+                            status.textContent = "Creating secure checkout...";
+                            button.disabled = true;
+
+                            try {
+                                const response = await fetch("/api/paddle/checkout", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json"
+                                    },
+                                    credentials: "same-origin",
+                                    body: JSON.stringify({
+                                        plan: key,
+                                        billing_cycle: billing.value
+                                    })
+                                });
+
+                                const data = await response.json();
+
+                                if (!response.ok || !data.checkout_url) {
+                                    throw new Error(data.error || "Checkout unavailable");
+                                }
+
+                                const url = new URL(data.checkout_url);
+
+                                if (url.protocol !== "https:") {
+                                    throw new Error("Invalid checkout URL");
+                                }
+
+                                window.location.assign(url.href);
+
+                            } catch (error) {
+                                status.textContent = "Checkout error: " + error.message;
+                            } finally {
+                                button.disabled = false;
+                            }
+                        });
+                        card.append(heading, price, limit, button);
+                        container.appendChild(card);
+                    }
+                }
+
+                billing.addEventListener("change", renderPlans);
+                renderPlans();
+
+            } catch (error) {
+                container.textContent = "Unable to load plans.";
+                console.error(error);
+            }
+        }
+
+        loadPromoPlans();
+
+        async function loadPromoSubscription() {
+            const status = document.getElementById("promoSubscriptionStatus");
+            if (!status) return;
+
+            status.textContent = "Checking subscription...";
+
+            try {
+                const response = await fetch("/api/promo/subscription", {
+                    credentials: "same-origin"
+                });
+
+                if (response.status === 401) {
+                    status.textContent = "Please log in to view your subscription.";
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error("Subscription request failed");
+                }
+
+                const data = await response.json();
+
+                if (data.subscribed && data.status === "active") {
+                    status.textContent =
+                        "Active Plan: " + data.plan +
+                        " | Billing: " + data.billing_cycle +
+                        " | Expires: " + data.expiry_date;
+                } else {
+                    status.textContent =
+                        "No active subscription. Choose a plan to get started.";
+                }
+            } catch (error) {
+                console.error(error);
+                status.textContent = "Unable to check subscription.";
+            }
+        }
+
+        loadPromoSubscription();
+        document.getElementById("promoGenerateBtn").addEventListener("click", async function () {
+            const button = this;
+            const message = document.getElementById("promoMessage");
+            const result = document.getElementById("promoResult");
+            const copyButton = document.getElementById("promoCopyBtn");
+
+            const productName = document.getElementById("promoProductName").value.trim();
+            const description = document.getElementById("promoDescription").value.trim();
+
+            if (!productName || !description) {
+                message.textContent = "Please enter product name and description.";
+                return;
+            }
+
+            button.disabled = true;
+            message.textContent = "Generating your promotion...";
+            result.textContent = "";
+            copyButton.style.display = "none";
+
+            try {
+                const response = await fetch("/api/promo/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        product_name: productName,
+                        description: description,
+                        audience: document.getElementById("promoAudience").value,
+                        language: document.getElementById("promoLanguage").value,
+                        tone: document.getElementById("promoTone").value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Promotion generation failed");
+                }
+
+                result.textContent = data.reply;
+                message.textContent = "Promotion generated successfully!";
+                copyButton.style.display = "inline-block";
+
+            } catch (error) {
+                message.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        document.getElementById("promoCopyBtn").addEventListener("click", async function () {
+            try {
+                await navigator.clipboard.writeText(
+                    document.getElementById("promoResult").textContent
+                );
+                document.getElementById("promoMessage").textContent = "Content copied!";
+            } catch (error) {
+                document.getElementById("promoMessage").textContent = "Unable to copy content.";
+            }
+        });
+    </script>
+
+    <footer style="
+      text-align: center;
+      padding: 24px 15px;
+      background: #111827;
+      color: #d1d5db;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+    ">
+        <p style="margin-bottom: 12px;">
+            © 2026 Habrivo AI. All rights reserved.
+        </p>
+
+        <a href="/privacy.html" style="color: #93c5fd; margin: 0 10px;">
+            Privacy Policy
+        </a>
+
+        <a href="/terms.html" style="color: #93c5fd; margin: 0 10px;">
+            Terms of Service
+        </a>
+
+        <a href="/refund.html" style="color: #93c5fd; margin: 0 10px;">
+            Refund Policy
+        </a>
+
+        <p style="margin-top: 14px;">
+            Support:
+            <a href="mailto:habrivoai@gmail.com" style="color: #93c5fd;">
+                habrivoai@gmail.com
+            </a>
+        </p>
+    </footer>
+
+</body>
+
+</html>
