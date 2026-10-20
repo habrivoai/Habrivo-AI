@@ -75,6 +75,8 @@ def conn():
 
 
 def init_db():
+    from subscriptions_db import init_subscriptions_db
+    init_subscriptions_db()
     db = conn()
     try:
         with db:
