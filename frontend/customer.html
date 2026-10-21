@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Habrivo AI | Customer Portal</title>
+    <link rel="stylesheet" href="/customer-dashboard.css">
     <style>
         * {
             box-sizing: border-box;
@@ -207,6 +208,16 @@
         <h1>🚀 Habrivo AI</h1>
         <p id="subtitle">Login to your AI workspace</p>
 
+        <p><a href="/">Home</a> · <a href="/#pricing">Compare plans</a></p>
+        <section id="checkoutPanel" class="hidden" aria-labelledby="checkoutHeading">
+            <h2 id="checkoutHeading">Your selected plan</h2>
+            <p id="checkoutSelection"></p>
+            <p id="checkoutMessage" role="status" aria-live="polite"></p>
+            <button id="checkoutContinue" type="button" disabled>Continue to checkout</button>
+            <button id="checkoutRetry" type="button">Refresh checkout availability</button>
+            <p>Account creation and checkout initiation do not activate a subscription. Verified payment confirmation is required.</p>
+        </section>
+        <p id="authExplanation">Account creation is free. No payment details are needed. AI generation is not included.</p>
         <form id="authForm">
             <div id="nameField" class="hidden">
                 <input id="name" placeholder="Full Name" autocomplete="name">
@@ -220,16 +231,38 @@
             <button id="submitBtn" type="submit">Login</button>
         </form>
 
+        <p id="recoveryLink"><a href="/forgot-password.html">Forgot Password?</a></p>
         <p id="message" role="status"></p>
 
+        <button id="sessionRetry" type="button" class="hidden">Retry sign-in check</button>
         <p class="switch" id="switchMode">
             New customer? Create account
         </p>
 
         <section id="welcome" class="hidden">
             <h2 id="welcomeName"></h2>
-            <p>Your customer login is working!</p>
+            <p>Manage your account and create marketing content below.</p>
 
+            <nav class="dashboard-nav" aria-label="Your workspace">
+                <a href="#dashboardOverview">Overview</a><a href="#marketingStudio">Marketing Studio</a>
+                <a href="#libraryPanel" data-dashboard-action="library">Saved Content</a>
+                <a href="#accountPanel" data-dashboard-action="account">Account Settings</a>
+                <a href="/#pricing">Upgrade / Pricing</a><a href="#logoutBtn" data-dashboard-action="logout">Logout</a>
+            </nav>
+            <section id="dashboardOverview" aria-labelledby="accessHeading">
+                <div class="dashboard-summary">
+                    <article><h3>Current account plan</h3><p id="dashboardPlan">Loading…</p></article>
+                    <article><h3>Subscription status</h3><p id="dashboardSubscription">Loading…</p></article>
+                    <article><h3>AI usage / lifetime trial</h3><p id="dashboardUsage">Loading…</p></article>
+                </div>
+                <h3 id="accessHeading">Your account access</h3>
+                <p id="accountAccess" role="status" aria-live="polite">Loading account access…</p>
+                <button type="button" id="verificationResend">Send / resend verification email</button><p id="verificationMessage" role="status" aria-live="polite"></p>
+                <p id="emailVerificationStatus">Checking email verification status…</p>
+                <p id="aiAccessStatus">Eligible new accounts receive 3 lifetime attempts after email verification. No payment details required.</p>
+                <button id="accessRetry" type="button">Refresh account access</button>
+                <a href="/#pricing">Compare paid plans and upgrade</a>
+            </section>
             <h3>🚀 Your AI Workspace</h3>
             <p>Welcome to your Habrivo AI Dashboard.</p>
 
@@ -237,19 +270,19 @@
 
                 <div class="tool-card">
                     <div class="tool-icon">🤖</div>
-                    <h3>AI Assistant</h3>
-                    <p>Chat with Habrivo AI and get instant help.</p>
+                    <h3>Marketing Studio</h3>
+                    <p>Create promotional copy, descriptions, captions and headlines.</p>
                     <button type="button" id="aiChatBtn">
-                        Open AI Chat →
+                        Open Marketing Studio →
                     </button>
                 </div>
 
                 <div class="tool-card">
                     <div class="tool-icon">📦</div>
-                    <h3>My Products</h3>
-                    <p>Explore products and digital services.</p>
+                    <h3>Content Library</h3>
+                    <p>View, copy or delete your saved marketing packs.</p>
                     <button type="button" id="productsBtn">
-                        View Products →
+                        Open Library →
                     </button>
                 </div>
 
@@ -264,451 +297,78 @@
 
             </div>
 
-            <section id="promoPricing" style="margin-top:30px;">
-                <h2>🚀 Habrivo AI Promo Studio</h2>
-                <p>AI-powered product promotions for online sellers.</p>
-
-                <label for="billingCycle">Billing period:</label>
-                <select id="billingCycle">
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                    <option value="half_yearly">Half Yearly</option>
-                    <option value="yearly">Yearly</option>
-                </select>
-
-                <div id="promoPlanCards" class="dashboard-tools" style="margin-top:20px;"></div>
-
-                <p id="promoSubscriptionStatus"></p>
+            <section id="accountPanel" class="hidden" aria-labelledby="accountHeading">
+                <h3 id="accountHeading">My Account</h3>
+                <p id="accountProfile"></p>
+                <p>Change your password. All your customer sessions will end afterward.</p>
+                <form id="passwordForm">
+                    <label for="currentPassword">Current password</label>
+                    <input id="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
+                    <label for="newPassword">New password</label>
+                    <input id="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+                    <label for="confirmPassword">Confirm new password</label>
+                    <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+                    <button id="passwordSubmit" type="submit">Change Password</button>
+                </form>
+                <button id="closeAccountBtn" type="button">Close Account Settings</button>
             </section>
-            <section id="promoGenerator" style="margin-top:30px;">
-                <h2>🚀 AI Product Promotion Generator</h2>
-                <p>Create professional marketing content for your products.</p>
+            <p id="accountMessage" role="status" aria-live="polite"></p>
 
-                <input id="promoProductName" placeholder="Product Name"
-                    style="width:100%;padding:12px;box-sizing:border-box;margin:8px 0;">
-
-                <textarea id="promoDescription" placeholder="Product Description"
-                    style="width:100%;padding:12px;box-sizing:border-box;margin:8px 0;"></textarea>
-
-                <input id="promoAudience" placeholder="Target Audience"
-                    style="width:100%;padding:12px;box-sizing:border-box;margin:8px 0;">
-
-                <select id="promoLanguage" style="width:100%;padding:12px;margin:8px 0;">
-                    <option value="English">English</option>
-                    <option value="Hindi">Hindi</option>
-                    <option value="Bengali">Bengali</option>
-                </select>
-
-                <select id="promoTone" style="width:100%;padding:12px;margin:8px 0;">
-                    <option value="Professional">Professional</option>
-                    <option value="Friendly">Friendly</option>
-                    <option value="Luxury">Luxury</option>
-                </select>
-
-                <button type="button" id="promoGenerateBtn">
-                    ✨ Generate Promotion
-                </button>
-
-                <p id="promoMessage" role="status"></p>
-
-                <pre id="promoResult" style="white-space:pre-wrap;overflow-wrap:anywhere;"></pre>
-
-                <button type="button" id="promoCopyBtn" style="display:none;">
-                    📋 Copy Content
-                </button>
-            </section>
-
-            <div id="chatBox" style="display:none; margin-top:20px;">
-                <h3>🤖 Habrivo AI Chat</h3>
-
-                <div id="chatMessages" style="height:220px; overflow-y:auto; background:#f1f5f9;
-                            padding:12px; border-radius:10px; margin-bottom:10px;">
+            <section id="marketingStudio" aria-labelledby="marketingHeading" style="margin-top:30px;">
+                <h2 id="marketingHeading">Habrivo AI Marketing Studio</h2>
+                <p>Create an English marketing pack for your product. Review all claims before publishing.</p>
+                <p id="marketingLock" role="status">Checking generation access…</p>
+                <form id="marketingForm">
+                    <fieldset id="marketingFields" disabled style="border:0;padding:0;min-width:0;">
+                    <label for="marketingName">Product name</label>
+                    <input id="marketingName" maxlength="120" required>
+                    <label for="marketingDescription">Product facts and description</label>
+                    <textarea id="marketingDescription" maxlength="1600" rows="5" required style="width:100%"></textarea>
+                    <label for="marketingAudience">Target audience</label>
+                    <input id="marketingAudience" maxlength="300" required>
+                    <label for="marketingTone">Tone</label>
+                    <select id="marketingTone"><option value="professional">Professional</option><option value="friendly">Friendly</option><option value="persuasive">Persuasive</option></select>
+                    <label for="marketingGoal">Marketing goal</label>
+                    <select id="marketingGoal"><option value="sales">Drive sales</option><option value="launch">Launch a product</option><option value="awareness">Build awareness</option></select>
+                    <p>Use a verified paid subscription or an email-verified eligible lifetime trial. One attempt per minute; monthly paid and shared daily limits apply.
+                        Reserved attempts count even if the provider fails or times out. Save successful results to your private library.</p>
+                    <button id="marketingSubmit" type="submit">Generate Marketing Pack</button>
+                    </fieldset>
+                </form>
+                <p id="marketingStatus" role="status" aria-live="polite"></p>
+                <button id="libraryOpen" type="button">My Content Library</button>
+                <p id="libraryMessage" role="status" aria-live="polite"></p>
+                <div id="marketingResults" class="hidden">
+                    <button id="librarySave" type="button" disabled>Save Marketing Pack</button>
+                    <h3>Promotional copy</h3>
+                    <textarea id="marketing_promotional_copy" rows="5" readonly aria-label="Promotional copy" style="width:100%"></textarea>
+                    <button type="button" data-marketing-copy="promotional_copy">Copy promotional copy</button>
+                    <h3>Product description</h3>
+                    <textarea id="marketing_product_description" rows="6" readonly aria-label="Product description" style="width:100%"></textarea>
+                    <button type="button" data-marketing-copy="product_description">Copy product description</button>
+                    <h3>Social caption</h3>
+                    <textarea id="marketing_social_caption" rows="4" readonly aria-label="Social caption" style="width:100%"></textarea>
+                    <button type="button" data-marketing-copy="social_caption">Copy social caption</button>
+                    <h3>Ad headline</h3>
+                    <textarea id="marketing_ad_headline" rows="2" readonly aria-label="Ad headline" style="width:100%"></textarea>
+                    <button type="button" data-marketing-copy="ad_headline">Copy ad headline</button>
                 </div>
+            </section>
 
-                <input id="chatInput" placeholder="Ask Habrivo AI anything..."
-                    style="width:100%; padding:12px; box-sizing:border-box;">
-
-                <button type="button" id="sendChatBtn">
-                    Send Message
-                </button>
-            </div>
+            <section id="libraryPanel" class="hidden" aria-labelledby="libraryHeading">
+                <h2 id="libraryHeading">My Content Library</h2>
+                <p id="libraryPanelMessage" role="status" aria-live="polite"></p>
+                <p>Your saved marketing packs. Saving and copying do not use AI attempts.</p>
+                <button id="libraryRefresh" type="button">Refresh / First Page</button>
+                <div id="libraryItems"></div>
+                <button id="libraryNext" type="button" disabled>Next Page</button>
+            </section>
 
             <button id="logoutBtn">Logout</button>
         </section>
     </main>
 
-    <script>
-        let signupMode = false;
-        async function restoreLogin() {
-            try {
-                const response = await fetch("/api/check-auth", {
-                    credentials: "same-origin"
-                });
 
-                if (!response.ok) return;
-
-                const data = await response.json();
-
-                if (data.authenticated && data.user) {
-                    document.getElementById("authForm").classList.add("hidden");
-                    document.getElementById("switchMode").classList.add("hidden");
-                    document.getElementById("welcome").classList.remove("hidden");
-
-                    document.getElementById("welcomeName").textContent =
-                        "Welcome, " + data.user.name + "!";
-                }
-            } catch (error) {
-                console.error("Session check failed:", error);
-            }
-        }
-
-        restoreLogin();
-
-        const form = document.getElementById("authForm");
-        const message = document.getElementById("message");
-        const button = document.getElementById("submitBtn");
-
-        document.getElementById("switchMode").onclick = () => {
-            signupMode = !signupMode;
-            document.getElementById("nameField")
-                .classList.toggle("hidden", !signupMode);
-            document.getElementById("name").required = signupMode;
-            document.getElementById("subtitle").textContent =
-                signupMode ? "Create your customer account" :
-                    "Login to your AI workspace";
-            button.textContent = signupMode ? "Create Account" : "Login";
-            document.getElementById("switchMode").textContent =
-                signupMode ? "Already registered? Login" :
-                    "New customer? Create account";
-            document.getElementById("password").autocomplete =
-                signupMode ? "new-password" : "current-password";
-            message.textContent = "";
-        };
-
-        form.addEventListener("submit", async (event) => {
-            event.preventDefault();
-            message.textContent = "";
-            button.disabled = true;
-
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-
-            const endpoint = signupMode ?
-                "/api/register" : "/api/customer/login";
-
-            const payload = signupMode ?
-                {
-                    name: document.getElementById("name").value,
-                    email,
-                    password
-                } : { email, password };
-
-            try {
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "same-origin",
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || "Request failed");
-                }
-
-                if (signupMode) {
-                    message.style.color = "green";
-                    message.textContent =
-                        "Account created! Now click Login.";
-                    document.getElementById("switchMode").click();
-                    message.textContent =
-                        "Account created successfully. Please login.";
-                } else {
-                    form.classList.add("hidden");
-                    document.getElementById("switchMode")
-                        .classList.add("hidden");
-                    document.getElementById("welcome")
-                        .classList.remove("hidden");
-                    document.getElementById("welcomeName").textContent =
-                        "Welcome, " + data.user.name + "!";
-                    message.textContent = "";
-                }
-            } catch (error) {
-                message.style.color = "crimson";
-                message.textContent = error.message;
-            } finally {
-                button.disabled = false;
-            }
-        });
-
-        document.getElementById("logoutBtn").onclick = async () => {
-            // Customer logout endpoint will be added next.
-            location.reload();
-        };
-        const chatBox = document.getElementById("chatBox");
-        const chatMessages = document.getElementById("chatMessages");
-        const chatInput = document.getElementById("chatInput");
-
-        document.getElementById("aiChatBtn").onclick = () => {
-            chatBox.style.display = "block";
-        };
-
-        document.getElementById("sendChatBtn").onclick = async () => {
-            const message = chatInput.value.trim();
-            if (!message) return;
-
-            const userLine = document.createElement("p");
-            userLine.style.cssText = `
-    background: #2563eb;
-    color: white;
-    padding: 12px;
-    border-radius: 12px;
-    margin: 8px 0 8px auto;
-    max-width: 85%;
-    width: fit-content;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-`;
-            userLine.textContent = "You: " + message;
-            chatMessages.appendChild(userLine);
-            chatInput.value = "";
-
-            try {
-                const response = await fetch("/api/chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message })
-                });
-
-                const data = await response.json();
-
-                const aiLine = document.createElement("div");
-
-                aiLine.style.cssText = `
-    background: #ffffff;
-    color: #172554;
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 12px;
-    border-left: 4px solid #2563eb;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-`;
-
-                const reply = data.reply || data.error || "No response";
-
-                const aiTitle = document.createElement("strong");
-                aiTitle.textContent = "🤖 Habrivo AI";
-
-                const aiText = document.createElement("div");
-                aiText.textContent = reply.replace(/\*\*/g, "");
-
-                aiLine.appendChild(aiTitle);
-                aiLine.appendChild(aiText);
-
-                chatMessages.appendChild(aiLine);
-            } catch (error) {
-                const errorLine = document.createElement("p");
-                errorLine.textContent = "Connection error: " + error.message;
-                chatMessages.appendChild(errorLine);
-            }
-
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        };
-
-        async function loadPromoPlans() {
-            const container = document.getElementById("promoPlanCards");
-            const billing = document.getElementById("billingCycle");
-            const status = document.getElementById("promoSubscriptionStatus");
-
-            if (!container || !billing) return;
-
-            container.textContent = "Loading subscription plans...";
-
-            try {
-                const response = await fetch("/api/promo/plans");
-                if (!response.ok) throw new Error("Could not load plans");
-
-                const data = await response.json();
-                if (!data.success) throw new Error("API error");
-
-                function renderPlans() {
-                    container.replaceChildren();
-
-                    for (const key of ["starter", "pro", "premium"]) {
-                        const plan = data.plans[key];
-                        if (!plan) continue;
-
-                        const card = document.createElement("div");
-                        card.className = "tool-card";
-
-                        const heading = document.createElement("h3");
-                        heading.textContent = plan.name;
-
-                        const price = document.createElement("h2");
-                        price.textContent = "$" + plan.prices[billing.value] + " USD";
-
-                        const limit = document.createElement("p");
-                        limit.textContent =
-                            plan.monthly_limit + " promotions per month";
-
-                        const button = document.createElement("button");
-                        button.type = "button";
-                        button.textContent = "Choose " + plan.name;
-
-                        button.addEventListener("click", async () => {
-                            status.textContent = "Creating secure checkout...";
-                            button.disabled = true;
-
-                            try {
-                                const response = await fetch("/api/paddle/checkout", {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json"
-                                    },
-                                    credentials: "same-origin",
-                                    body: JSON.stringify({
-                                        plan: key,
-                                        billing_cycle: billing.value
-                                    })
-                                });
-
-                                const data = await response.json();
-
-                                if (!response.ok || !data.checkout_url) {
-                                    throw new Error(data.error || "Checkout unavailable");
-                                }
-
-                                const url = new URL(data.checkout_url);
-
-                                if (url.protocol !== "https:") {
-                                    throw new Error("Invalid checkout URL");
-                                }
-
-                                window.location.assign(url.href);
-
-                            } catch (error) {
-                                status.textContent = "Checkout error: " + error.message;
-                            } finally {
-                                button.disabled = false;
-                            }
-                        });
-                        card.append(heading, price, limit, button);
-                        container.appendChild(card);
-                    }
-                }
-
-                billing.addEventListener("change", renderPlans);
-                renderPlans();
-
-            } catch (error) {
-                container.textContent = "Unable to load plans.";
-                console.error(error);
-            }
-        }
-
-        loadPromoPlans();
-
-        async function loadPromoSubscription() {
-            const status = document.getElementById("promoSubscriptionStatus");
-            if (!status) return;
-
-            status.textContent = "Checking subscription...";
-
-            try {
-                const response = await fetch("/api/promo/subscription", {
-                    credentials: "same-origin"
-                });
-
-                if (response.status === 401) {
-                    status.textContent = "Please log in to view your subscription.";
-                    return;
-                }
-
-                if (!response.ok) {
-                    throw new Error("Subscription request failed");
-                }
-
-                const data = await response.json();
-
-                if (data.subscribed && data.status === "active") {
-                    status.textContent =
-                        "Active Plan: " + data.plan +
-                        " | Billing: " + data.billing_cycle +
-                        " | Expires: " + data.expiry_date;
-                } else {
-                    status.textContent =
-                        "No active subscription. Choose a plan to get started.";
-                }
-            } catch (error) {
-                console.error(error);
-                status.textContent = "Unable to check subscription.";
-            }
-        }
-
-        loadPromoSubscription();
-        document.getElementById("promoGenerateBtn").addEventListener("click", async function () {
-            const button = this;
-            const message = document.getElementById("promoMessage");
-            const result = document.getElementById("promoResult");
-            const copyButton = document.getElementById("promoCopyBtn");
-
-            const productName = document.getElementById("promoProductName").value.trim();
-            const description = document.getElementById("promoDescription").value.trim();
-
-            if (!productName || !description) {
-                message.textContent = "Please enter product name and description.";
-                return;
-            }
-
-            button.disabled = true;
-            message.textContent = "Generating your promotion...";
-            result.textContent = "";
-            copyButton.style.display = "none";
-
-            try {
-                const response = await fetch("/api/promo/generate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        product_name: productName,
-                        description: description,
-                        audience: document.getElementById("promoAudience").value,
-                        language: document.getElementById("promoLanguage").value,
-                        tone: document.getElementById("promoTone").value
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.error || "Promotion generation failed");
-                }
-
-                result.textContent = data.reply;
-                message.textContent = "Promotion generated successfully!";
-                copyButton.style.display = "inline-block";
-
-            } catch (error) {
-                message.textContent = error.message;
-            } finally {
-                button.disabled = false;
-            }
-        });
-
-        document.getElementById("promoCopyBtn").addEventListener("click", async function () {
-            try {
-                await navigator.clipboard.writeText(
-                    document.getElementById("promoResult").textContent
-                );
-                document.getElementById("promoMessage").textContent = "Content copied!";
-            } catch (error) {
-                document.getElementById("promoMessage").textContent = "Unable to copy content.";
-            }
-        });
-    </script>
 
     <footer style="
       text-align: center;
@@ -742,6 +402,13 @@
         </p>
     </footer>
 
+    <script src="/customer-dashboard.js" defer></script>
+    <script src="/customer-account.js" defer></script>
+    <script src="/marketing-studio.js" defer></script>
+    <script src="/content-library.js" defer></script>
+    <script src="/checkout-journey.js" defer></script>
+    <script src="/account-access.js" defer></script>
+    <script src="/email-verification.js" defer></script>
 </body>
 
 </html>

@@ -3,3 +3,5 @@ Flask-Cors
 python-dotenv
 gunicorn
 requests
+
+psycopg[binary]>=3.2,<4

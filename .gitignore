@@ -9,3 +9,8 @@ backend/habrivo.db
 
 # Uploads
 backend/uploads/
+# Actual application directory (legacy backend rules retained above)
+beckend/.env
+beckend/habrivo.db
+beckend/habrivo.db-*
+beckend/uploads/

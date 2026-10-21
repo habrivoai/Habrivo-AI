@@ -1,0 +1,17 @@
+.dashboard-nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 0; border-bottom: 1px solid #cbd5e1; }
+.dashboard-nav a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 9px 12px; border-radius: 8px; background: #edf3ff; color: #1744a2; text-decoration: none; font-weight: bold; }
+.dashboard-nav a:hover { background: #dbeafe; }
+.dashboard-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-top: 24px; }
+.dashboard-summary article { padding: 16px; border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; }
+.dashboard-summary h3 { font-size: 15px; margin-top: 0; }
+.dashboard-summary p { color: #17213b; overflow-wrap: anywhere; }
+#welcome section { scroll-margin-top: 18px; }
+#welcome textarea, #welcome select { max-width: 100%; font: inherit; padding: 10px; border: 1px solid #94a3b8; border-radius: 8px; }
+#welcome button { min-height: 44px; }
+#libraryItems article { border: 1px solid #cbd5e1; border-radius: 12px; padding: 18px; margin: 16px 0; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid #df9700; outline-offset: 3px; }
+@media (max-width: 768px) {
+    .dashboard-summary { grid-template-columns: 1fr; }
+    .dashboard-nav a { flex: 1 1 44%; text-align: center; }
+    #welcome .tool-card { padding: 18px; }
+}
