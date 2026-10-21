@@ -331,6 +331,7 @@ class SnapshotTests(unittest.TestCase):
         report=self.validate()
         self.assertIn('wal_or_unsupported_snapshot_header',self.codes(report))
 
+    @unittest.skipUnless(os.name == 'posix', 'POSIX kernel-lock integration; native Windows snapshots unsupported')
     def test_external_sqlite_reserved_lock_rejected(self):
         fixture(self.source)
         # A reserved lock without journal writes proves lock detection separately
@@ -613,6 +614,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertNotIn('PRIVATE_PATH_OR_CREDENTIAL',json.dumps(error.exception.report))
         self.assertEqual(self.inventory(),before)
 
+    @unittest.skipUnless(os.name == 'posix', 'POSIX kernel-lock integration; native Windows snapshots unsupported')
     def test_guarded_session_holds_writer_lock_during_record_consumption(self):
         fixture(self.source)
         before=self.inventory()
@@ -621,10 +623,13 @@ class SnapshotTests(unittest.TestCase):
             script=("import fcntl,sys; f=open(sys.argv[1],'rb+');\n"
                     "try: fcntl.lockf(f,fcntl.LOCK_EX|fcntl.LOCK_NB,1,0x40000001)\n"
                     "except BlockingIOError: print('blocked')\n"
-                    "else: print('unexpectedly unlocked')")
+                    "else: print('available')")
             result=subprocess.run([sys.executable,'-B','-c',script,str(self.source)],
                                   capture_output=True,text=True,timeout=5,check=True)
             self.assertEqual(result.stdout.strip(),'blocked')
+        released = subprocess.run([sys.executable,'-B','-c',script,str(self.source)],
+                                  capture_output=True,text=True,timeout=5,check=True)
+        self.assertEqual(released.stdout.strip(), 'available')
         self.assertTrue(source.finalized)
         self.assertEqual(self.inventory(),before)
 
@@ -681,9 +686,39 @@ class CleanupTests(unittest.TestCase):
             stack.enter_context(patch.object(validator.os,'read',return_value=bytes(header)))
             stack.enter_context(patch.object(validator.os,'close',fd_close))
             stack.enter_context(patch.object(validator.sqlite3,'connect',return_value=db))
-            stack.enter_context(patch('fcntl.lockf'))
+            stack.enter_context(patch.object(validator, '_acquire_source_lock'))
             yield SimpleNamespace(db=db,cursors=cursors,fd_close=fd_close,calls=calls,
                                   path=path,info=info)
+
+    def test_lock_denial_closes_descriptor_without_opening_sqlite(self):
+        cases = [(code, failures) for code in ('read_lock_unavailable', 'active_writer_or_read_lock_unavailable')
+                 for failures in ((), ('descriptor',))]
+        for code, failures in cases:
+            with self.subTest(code=code, failures=failures), self.resources(failures) as mocks, patch.object(
+                    validator, '_acquire_source_lock', side_effect=validator.UnsafeSnapshot(code)):
+                with self.assertRaises(validator.SourceSessionError) as caught:
+                    with validator.guarded_source_session('PRIVATE_PATH', confirmed_offline=True):
+                        self.fail('Denied source exposed a session')
+                self.assertEqual(caught.exception.code, code)
+                self.assertIsNone(caught.exception.report['source_sha256'])
+                validator.sqlite3.connect.assert_not_called()
+                mocks.db.close.assert_not_called()
+                mocks.fd_close.assert_called_once_with(12345)
+                self.assertNotIn('PRIVATE_', str(caught.exception))
+                if failures:
+                    self.assertIn('source_descriptor_close_failed', {i['code'] for i in caught.exception.report['issues']})
+
+    def test_unsupported_platform_denial_is_not_bypassed_by_portable_mocks(self):
+        acquire = validator._acquire_source_lock
+        with self.resources() as mocks, patch.object(validator, '_LOCK_PLATFORM', 'nt'), patch.object(
+                validator, '_acquire_source_lock', side_effect=acquire):
+            with self.assertRaises(validator.SourceSessionError) as caught:
+                with validator.guarded_source_session('PRIVATE_PATH', confirmed_offline=True):
+                    self.fail('Unsupported platform exposed records')
+            self.assertEqual(caught.exception.code, 'read_lock_unavailable')
+            self.assertIsNone(caught.exception.report['source_sha256'])
+            validator.sqlite3.connect.assert_not_called()
+            mocks.fd_close.assert_called_once_with(12345)
 
     def open_readers(self,source):
         return [source.iter_records('users'),source.iter_records('companies')]
@@ -1127,6 +1162,64 @@ class CleanupTests(unittest.TestCase):
             self.assertTrue(source.finalized)
             self.assertEqual(source.fingerprint,'a'*64)
             self.assertEqual(self.cleanup_codes(source.report),{})
+
+
+class PlatformLockBoundaryTests(unittest.TestCase):
+    def fake_fcntl(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        return SimpleNamespace(LOCK_SH=1, LOCK_NB=4, lockf=Mock())
+
+    def test_posix_lock_preserves_range_flags_and_close_release(self):
+        module = self.fake_fcntl()
+        with patch.object(validator, '_LOCK_PLATFORM', 'posix'), patch.dict(sys.modules, {'fcntl':module}), patch.object(validator.os, 'close') as close:
+            validator._acquire_source_lock(123)
+            module.lockf.assert_called_once_with(123, 5, 514, 0x40000000)
+            close.assert_not_called()
+            validator._release_source_lock(123)
+            close.assert_called_once_with(123)
+            self.assertEqual(module.lockf.call_count, 1)  # No early LOCK_UN.
+
+    def test_unsupported_platform_never_imports_fcntl(self):
+        import builtins
+        original = builtins.__import__
+        def importing(name, *args, **kwargs):
+            if name == 'fcntl':
+                self.fail('Unsupported platform attempted POSIX import')
+            return original(name, *args, **kwargs)
+        with patch.object(validator, '_LOCK_PLATFORM', 'nt'), patch('builtins.__import__', side_effect=importing):
+            with self.assertRaises(validator.UnsafeSnapshot) as caught:
+                validator._acquire_source_lock(123)
+        self.assertEqual(caught.exception.code, 'read_lock_unavailable')
+
+    def test_missing_posix_module_is_safe_denial(self):
+        with patch.object(validator, '_LOCK_PLATFORM', 'posix'), patch.dict(sys.modules, {'fcntl':None}):
+            with self.assertRaises(validator.UnsafeSnapshot) as caught:
+                validator._acquire_source_lock(123)
+        self.assertEqual(caught.exception.code, 'read_lock_unavailable')
+
+    def test_lock_errors_are_sanitized(self):
+        for error in (BlockingIOError('PRIVATE_LOCK'), OSError('PRIVATE_LOCK')):
+            module = self.fake_fcntl(); module.lockf.side_effect = error
+            with self.subTest(kind=type(error).__name__), patch.object(validator, '_LOCK_PLATFORM', 'posix'), patch.dict(sys.modules, {'fcntl':module}):
+                with self.assertRaises(validator.UnsafeSnapshot) as caught:
+                    validator._acquire_source_lock(123)
+                self.assertEqual(caught.exception.code, 'active_writer_or_read_lock_unavailable')
+                self.assertNotIn('PRIVATE', str(caught.exception))
+
+    def test_interrupt_and_descriptor_close_failure_keep_original_objects(self):
+        module = self.fake_fcntl(); interrupt = KeyboardInterrupt()
+        module.lockf.side_effect = interrupt
+        with patch.object(validator, '_LOCK_PLATFORM', 'posix'), patch.dict(sys.modules, {'fcntl':module}):
+            with self.assertRaises(KeyboardInterrupt) as caught:
+                validator._acquire_source_lock(123)
+            self.assertIs(caught.exception, interrupt)
+        failure = OSError('PRIVATE_CLOSE')
+        with patch.object(validator.os, 'close', side_effect=failure) as close:
+            with self.assertRaises(OSError) as caught:
+                validator._release_source_lock(123)
+            self.assertIs(caught.exception, failure)
+            close.assert_called_once_with(123)
 
 
 if __name__=='__main__':

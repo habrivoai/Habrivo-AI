@@ -138,6 +138,36 @@ def _digest(fd):
         digest.update(chunk)
 
 
+_LOCK_PLATFORM = os.name
+
+
+def _acquire_source_lock(fd):
+    """POSIX-only nonblocking shared SQLite lock; unsupported means rejection.
+
+    No Windows fallback. This boundary can be mocked by portable resource tests,
+    independently of the host's ability to import fcntl.
+    """
+    if _LOCK_PLATFORM != "posix":
+        raise UnsafeSnapshot("read_lock_unavailable")
+    try:
+        import fcntl
+        fcntl.lockf(fd, fcntl.LOCK_SH | fcntl.LOCK_NB, 514, 0x40000000)
+    except ImportError:
+        raise UnsafeSnapshot("read_lock_unavailable") from None
+    except OSError:
+        raise UnsafeSnapshot("active_writer_or_read_lock_unavailable") from None
+
+
+def _release_source_lock(fd):
+    """Close the owned descriptor once, releasing its kernel locks.
+
+    Deliberately no separate LOCK_UN: preserve the existing descriptor-close
+    release and error behavior. The caller must attempt this even if acquisition
+    or SQLite/cursor cleanup failed. Do not retry close after failure.
+    """
+    os.close(fd)
+
+
 @contextmanager
 def _snapshot(path_value, confirmed, report):
     if not confirmed:
@@ -162,15 +192,7 @@ def _snapshot(path_value, confirmed, report):
             raise UnsafeSnapshot("invalid_sqlite_header")
         if header[18:20] != b"\x01\x01":
             raise UnsafeSnapshot("wal_or_unsupported_snapshot_header")
-        try:
-            import fcntl
-            # Shared locks across SQLite's pending/reserved/shared lock bytes.
-            # Detect/block cooperating writers without changing source bytes.
-            fcntl.lockf(fd, fcntl.LOCK_SH | fcntl.LOCK_NB, 514, 0x40000000)
-        except ImportError:
-            raise UnsafeSnapshot("read_lock_unavailable") from None
-        except OSError:
-            raise UnsafeSnapshot("active_writer_or_read_lock_unavailable") from None
+        _acquire_source_lock(fd)
         before = _digest(fd)
         _reject_sidecars(path)
         # Immutable is safe ONLY after the detached/offline checks above. It
@@ -221,7 +243,7 @@ def _snapshot(path_value, confirmed, report):
             except BaseException:
                 _record_cleanup_failure(report, "source_sqlite_close_failed")
         try:
-            os.close(fd)
+            _release_source_lock(fd)
         except BaseException:
             _record_cleanup_failure(report, "source_descriptor_close_failed")
         if _has_cleanup_failure(report):

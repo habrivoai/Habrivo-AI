@@ -292,3 +292,58 @@ New tests generate synthetic snapshots and upload trees, check unchanged content
 mtime/mode and sidecar inventories, exercise WAL and another process's SQLite
 reserved lock, and verify privacy-safe reporting. Existing real PostgreSQL tests
 remain guarded and skip when no explicit disposable test target is supplied.
+
+## Narrow platform-test compatibility (Step 57Q)
+
+Native Windows source validation/import remains **unsupported and fail-closed**.
+`_acquire_source_lock()` is the internal POSIX-only boundary: it uses the same
+nonblocking shared `fcntl.lockf()` lock over 514 bytes at `0x40000000`. Unsupported
+platforms/missing `fcntl` produce `read_lock_unavailable`; OS lock failures produce
+`active_writer_or_read_lock_unavailable`. There is no unlocked fallback. The
+`_release_source_lock()` boundary closes the owned descriptor once, as before;
+there is no new early `LOCK_UN` or retry of a failed close. Snapshot cleanup still
+attempts it even after acquisition, reader or SQLite-close failure. Existing
+fingerprint-denial and original-exception protections remain unchanged.
+
+Portable in-memory resource tests mock acquisition at this internal boundary,
+not `fcntl.lockf`. They still exercise descriptor release/close failures and all
+reader/SQLite cleanup. Boundary tests inject a synthetic POSIX module and explicitly
+verify unsupported-platform denial without depending on a real host `fcntl`.
+Only the two real POSIX subprocess-lock tests are explicitly POSIX-only; no whole
+validator/importer class is skipped. Consequently the **full native Windows suite
+is not expected to pass yet**: real snapshot success tests need a supported runtime.
+Passing the mock tests does not establish native Windows locking support.
+
+To run just the portable resource/boundary tests on Windows, from the project root:
+
+```powershell
+Push-Location tests
+try {
+    python -B -m unittest test_sqlite_snapshot_validator.CleanupTests test_sqlite_snapshot_validator.PlatformLockBoundaryTests test_snapshot_metadata_probe -v
+} finally {
+    Pop-Location
+}
+```
+
+Investigate `snapshot_changed` independently with:
+
+```powershell
+python -B tests/snapshot_metadata_probe.py
+```
+
+This probe creates and removes one new synthetic binary temporary file. It opens
+no SQLite database, takes no source path and accesses no customer data. It prints
+only platform and equality booleans for path/descriptor device, inode, size, mtime
+and ctime before/after reading, plus content equality. It never prints paths, raw
+metadata identifiers or file contents. It does not use or alter validator checks.
+A false comparison is diagnostic evidence, **not** permission to discard that
+identity/metadata field. All-true comparisons cannot rule out later SQLite-related
+or filesystem-specific behavior; capture representative safe Windows test error
+codes and failing test names as well. On Linux the probe returned all true; this
+does not establish the cause on Windows Python 3.13/SQLite 3.50.
+
+Metadata comparisons still occur before lock acquisition; therefore an unsupported
+Windows source can fail with `snapshot_changed` before reaching
+`read_lock_unavailable`. No ordering, identity, sidecar, read-only, schema or digest
+checks were relaxed. A future native Windows locking/identity backend, reparse-point
+handling and actual Windows filesystem tests require separate implementation/review.
