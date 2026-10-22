@@ -141,14 +141,19 @@ def _digest(fd):
 _LOCK_PLATFORM = os.name
 
 
+def _require_supported_lock_platform():
+    """Reject unsupported hosts before source access; never an unlocked fallback."""
+    if _LOCK_PLATFORM != "posix":
+        raise UnsafeSnapshot("read_lock_unavailable")
+
+
 def _acquire_source_lock(fd):
     """POSIX-only nonblocking shared SQLite lock; unsupported means rejection.
 
     No Windows fallback. This boundary can be mocked by portable resource tests,
     independently of the host's ability to import fcntl.
     """
-    if _LOCK_PLATFORM != "posix":
-        raise UnsafeSnapshot("read_lock_unavailable")
+    _require_supported_lock_platform()
     try:
         import fcntl
         fcntl.lockf(fd, fcntl.LOCK_SH | fcntl.LOCK_NB, 514, 0x40000000)
@@ -172,6 +177,7 @@ def _release_source_lock(fd):
 def _snapshot(path_value, confirmed, report):
     if not confirmed:
         raise UnsafeSnapshot("offline_snapshot_confirmation_required")
+    _require_supported_lock_platform()
     path = _explicit_path(path_value)
     try:
         info = path.lstat()

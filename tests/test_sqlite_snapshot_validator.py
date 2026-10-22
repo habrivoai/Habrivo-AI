@@ -675,6 +675,7 @@ class CleanupTests(unittest.TestCase):
         db.execute.side_effect=execute
         with contextlib.ExitStack() as stack:
             for target,options in (
+                ('_require_supported_lock_platform',{'return_value':None}),
                 ('_explicit_path',{'return_value':path}),
                 ('_reject_sidecars',{'return_value':None}),
                 ('_digest',{'return_value':'a'*64}),
@@ -709,14 +710,32 @@ class CleanupTests(unittest.TestCase):
                     self.assertIn('source_descriptor_close_failed', {i['code'] for i in caught.exception.report['issues']})
 
     def test_unsupported_platform_denial_is_not_bypassed_by_portable_mocks(self):
-        acquire = validator._acquire_source_lock
+        require = validator._require_supported_lock_platform
         with self.resources() as mocks, patch.object(validator, '_LOCK_PLATFORM', 'nt'), patch.object(
-                validator, '_acquire_source_lock', side_effect=acquire):
+                validator, '_require_supported_lock_platform', side_effect=require):
             with self.assertRaises(validator.SourceSessionError) as caught:
                 with validator.guarded_source_session('PRIVATE_PATH', confirmed_offline=True):
                     self.fail('Unsupported platform exposed records')
             self.assertEqual(caught.exception.code, 'read_lock_unavailable')
             self.assertIsNone(caught.exception.report['source_sha256'])
+            validator.sqlite3.connect.assert_not_called()
+            validator._explicit_path.assert_not_called()
+            validator.os.open.assert_not_called()
+            validator._digest.assert_not_called()
+            mocks.fd_close.assert_not_called()
+
+    def test_posix_initial_ctime_only_mismatch_denies_before_locking(self):
+        from types import SimpleNamespace
+        with self.resources() as mocks, patch.object(validator, '_LOCK_PLATFORM', 'posix'):
+            changed = SimpleNamespace(**{**vars(mocks.info), 'st_ctime_ns':2})
+            validator.os.fstat.return_value = changed
+            with self.assertRaises(validator.SourceSessionError) as caught:
+                with validator.guarded_source_session('PRIVATE_PATH', confirmed_offline=True):
+                    self.fail('Changed source exposed records')
+            self.assertEqual(caught.exception.code, 'snapshot_changed')
+            self.assertIsNone(caught.exception.report['source_sha256'])
+            validator._acquire_source_lock.assert_not_called()
+            validator._digest.assert_not_called()
             validator.sqlite3.connect.assert_not_called()
             mocks.fd_close.assert_called_once_with(12345)
 
@@ -1169,6 +1188,42 @@ class PlatformLockBoundaryTests(unittest.TestCase):
         from types import SimpleNamespace
         from unittest.mock import Mock
         return SimpleNamespace(LOCK_SH=1, LOCK_NB=4, lockf=Mock())
+
+    def test_unsupported_platform_precedes_source_access_for_validator_and_session(self):
+        class UnusablePath:
+            def __fspath__(self):
+                raise AssertionError('Source path must not be inspected')
+        for platform in ('nt', 'unsupported'):
+            with self.subTest(platform=platform), contextlib.ExitStack() as stack:
+                stack.enter_context(patch.object(validator, '_LOCK_PLATFORM', platform))
+                guards = [stack.enter_context(patch.object(validator, name)) for name in
+                          ('_explicit_path','_reject_sidecars','_digest','_acquire_source_lock')]
+                opened = stack.enter_context(patch.object(validator.os,'open'))
+                sqlite = stack.enter_context(patch.object(validator.sqlite3,'connect'))
+                path = UnusablePath()
+                report = validator.validate_snapshot(path, confirmed_offline=True)
+                self.assertFalse(report['valid'])
+                self.assertIsNone(report['source_sha256'])
+                self.assertEqual([i['code'] for i in report['issues']], ['read_lock_unavailable'])
+                with self.assertRaises(validator.SourceSessionError) as caught:
+                    with validator.guarded_source_session(path, confirmed_offline=True):
+                        self.fail('Unsupported source exposed records')
+                self.assertEqual(caught.exception.code, 'read_lock_unavailable')
+                self.assertIsNone(caught.exception.report['source_sha256'])
+                for guard in [*guards,opened,sqlite]: guard.assert_not_called()
+
+    def test_confirmation_remains_first_gate_on_unsupported_platform(self):
+        with patch.object(validator, '_LOCK_PLATFORM', 'nt'), patch.object(
+                validator, '_require_supported_lock_platform') as require, patch.object(
+                validator, '_explicit_path') as path:
+            report = validator.validate_snapshot('PRIVATE_PATH', confirmed_offline=False)
+            self.assertEqual([i['code'] for i in report['issues']], ['offline_snapshot_confirmation_required'])
+            with self.assertRaises(validator.SourceSessionError) as caught:
+                with validator.guarded_source_session('PRIVATE_PATH', confirmed_offline=False):
+                    self.fail('Unconfirmed source exposed records')
+            self.assertEqual(caught.exception.code, 'offline_snapshot_confirmation_required')
+            require.assert_not_called()
+            path.assert_not_called()
 
     def test_posix_lock_preserves_range_flags_and_close_release(self):
         module = self.fake_fcntl()

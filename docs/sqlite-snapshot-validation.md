@@ -342,8 +342,32 @@ or filesystem-specific behavior; capture representative safe Windows test error
 codes and failing test names as well. On Linux the probe returned all true; this
 does not establish the cause on Windows Python 3.13/SQLite 3.50.
 
-Metadata comparisons still occur before lock acquisition; therefore an unsupported
-Windows source can fail with `snapshot_changed` before reaching
-`read_lock_unavailable`. No ordering, identity, sidecar, read-only, schema or digest
-checks were relaxed. A future native Windows locking/identity backend, reparse-point
-handling and actual Windows filesystem tests require separate implementation/review.
+### Unsupported-platform precedence (Step 57W.19)
+
+Offline confirmation remains the first gate. A shared internal
+`_require_supported_lock_platform()` then rejects unsupported hosts with
+`read_lock_unavailable` before path conversion/inspection, descriptor opening,
+hashing or SQLite access. Acquisition independently calls the same capability
+check. Native Windows remains unsupported; no successful validation, record access
+or authoritative fingerprint is permitted. Missing/unsafe source diagnostics on
+unsupported hosts intentionally take lower precedence than the capability error.
+
+On POSIX, existing source-check ordering, all five signature fields (including
+ctime), lock range/flags, sidecar/symlink checks, final digest bracketing and
+unconditional cleanup remain unchanged. Only in-memory mock resource tests simulate
+the capability boundary; explicit unsupported-host tests exercise its real denial.
+No broad test-class skipping or fake runtime locks were added.
+
+The Windows synthetic SQLite fixture was observed to disagree only on ctime between
+path and descriptor observations before lock acquisition. The underlying timestamp
+reason is not established; the binary-file probe is not equivalent evidence. This
+change improves failure precedence, not Windows timestamp handling or native
+snapshot support. Metadata comparisons are not weakened or removed. A future native
+Windows locking/identity backend, reparse-point handling and actual Windows
+filesystem tests require separate implementation/review.
+
+Windows follow-up after separately transferring/reviewing this change: run the
+portable command above. The new unsupported-host tests must report
+`read_lock_unavailable` with no source access; confirmation denial must remain first.
+The existing real-file successful-validation tests still do not represent a supported
+native Windows workflow and the complete Windows suite is not expected to pass.
