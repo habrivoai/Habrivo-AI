@@ -66,6 +66,29 @@ class MarketingStudioTests(unittest.TestCase):
         self.assertFalse(kwargs['allow_redirects'])
         self.assertEqual(json.loads(kwargs['json']['messages'][1]['content']),self.details())
 
+    def test_strict_structured_output_payload_omits_string_length_keywords(self):
+        with self.provider() as provider:
+            studio.generate(self.details(), studio.ProviderConfig('synthetic-key', 'configured-model', 50))
+        response_format = provider.call_args.kwargs['json']['response_format']
+        self.assertEqual(response_format['type'], 'json_schema')
+        self.assertIs(response_format['json_schema']['strict'], True)
+        self.assertEqual(response_format['json_schema']['schema'], {
+            'type': 'object',
+            'properties': {name: {'type': 'string'} for name in studio.OUTPUTS},
+            'required': list(studio.OUTPUTS),
+            'additionalProperties': False,
+        })
+
+    def test_model_prompt_includes_each_server_output_character_limit(self):
+        with self.provider() as provider:
+            studio.generate(self.details(), studio.ProviderConfig('synthetic-key', 'configured-model', 50))
+        system = provider.call_args.kwargs['json']['messages'][0]
+        self.assertEqual(system['role'], 'system')
+        self.assertIn('Maximum characters per field:', system['content'])
+        for name, maximum in studio.OUTPUTS.items():
+            self.assertIn(f'{name}: {maximum}', system['content'])
+        self.assertNotIn('schema length limit', system['content'])
+
     def test_unauthenticated_and_unconfigured_never_call_provider(self):
         with self.provider() as provider:
             self.assertEqual(self.post('/api/marketing/generate',self.details()).status_code,401)
