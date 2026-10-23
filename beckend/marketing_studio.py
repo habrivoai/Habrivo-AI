@@ -167,6 +167,8 @@ def generate(details, config):
         'response_format': {'type': 'json_schema', 'json_schema': {
             'name': 'marketing_pack', 'strict': True, 'schema': schema}}
     }
+    if config.model == 'gpt-6-luna':
+        payload['reasoning_effort'] = 'none'
     try:
         deadline = time.monotonic() + 35
         # Fixed TLS endpoint, no automatic retries or redirects; never log bodies/keys.

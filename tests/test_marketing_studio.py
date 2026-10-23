@@ -66,6 +66,21 @@ class MarketingStudioTests(unittest.TestCase):
         self.assertFalse(kwargs['allow_redirects'])
         self.assertEqual(json.loads(kwargs['json']['messages'][1]['content']),self.details())
 
+    def test_luna_payload_disables_reasoning(self):
+        with self.provider() as provider:
+            studio.generate(self.details(), studio.ProviderConfig('synthetic-key', 'gpt-6-luna', 50))
+        payload = provider.call_args.kwargs['json']
+        self.assertEqual(payload['reasoning_effort'], 'none')
+        self.assertEqual(payload['max_completion_tokens'], 900)
+
+    def test_other_model_payload_omits_reasoning_effort(self):
+        for model in ('gpt-4.1-mini', 'gpt-6-luna-preview', 'GPT-6-LUNA'):
+            with self.subTest(model=model), self.provider() as provider:
+                studio.generate(self.details(), studio.ProviderConfig('synthetic-key', model, 50))
+            payload = provider.call_args.kwargs['json']
+            self.assertNotIn('reasoning_effort', payload)
+            self.assertEqual(payload['max_completion_tokens'], 900)
+
     def test_strict_structured_output_payload_omits_string_length_keywords(self):
         with self.provider() as provider:
             studio.generate(self.details(), studio.ProviderConfig('synthetic-key', 'configured-model', 50))
